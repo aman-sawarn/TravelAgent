@@ -1,0 +1,12 @@
+name: travelgpt
+channels:
+- conda-forge
+dependencies:
+- python=3.11
+- pip
+- pip:
+- fastapi
+- uvicorn
+- httpx
+- pydantic
+- python-dotenv
