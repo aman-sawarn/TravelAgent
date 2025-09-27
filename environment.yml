@@ -1,12 +1,13 @@
 name: travelgpt
 channels:
-- conda-forge
+  - conda-forge
 dependencies:
-- python=3.11
-- pip
-- pip:
-- fastapi
-- uvicorn
-- httpx
-- pydantic
-- python-dotenv
+  - python=3.11
+  - pip
+  - nodejs=20          # includes npm
+  - pip:
+      - fastapi
+      - uvicorn
+      - httpx
+      - pydantic
+      - python-dotenv
