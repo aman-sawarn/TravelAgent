@@ -11,6 +11,7 @@ from langchain_core.tools import tool
 from langchain.chat_models import ChatHuggingFace
 from dotenv import load_dotenv
 load_dotenv()
+
 # --------------------
 # State schema
 # --------------------
