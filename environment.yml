@@ -6,8 +6,19 @@ dependencies:
   - pip
   - nodejs=20          # includes npm
   - pip:
+      - langchain
+      - langgraph
+      - langchain-openai
+      - transformers
+      - langchain-community
       - fastapi
+      - llama-stack
+      - torchao
       - uvicorn
+      - wikipedia
+      - langchain_huggingface
       - httpx
-      - pydantic
       - python-dotenv
+      - pydantic
+      - amadeus
+      - requests
