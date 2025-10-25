@@ -1,5 +1,11 @@
 /backend/models/
 *.pyc
-.env*.pyc
-__pycache__/
-.env.env
+# Local environment files
+.env
+.env.*.local
+.env.local
+# Node modules / python envs / build files (optional examples)
+node_modules/
+venv/
+dist/
+build/
