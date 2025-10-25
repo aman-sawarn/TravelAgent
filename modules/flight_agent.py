@@ -4,6 +4,7 @@ from ollama import chat
 import json, os, sys
 from datetime import datetime
 from pydantic import BaseModel, Field, ValidationError
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.search import Search
 from modules.schemas import FetchFlightSearchDetails
@@ -13,7 +14,7 @@ import pandas as pd
 def fetch_flight_details(prompt: str) -> FetchFlightSearchDetails:
     """Extract the details from the prompt required to search a Flight"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     extraction_prompt = f"""
     You are a helpful assistant that extracts flight search details from user prompts.
     The Current date and time: {now}
@@ -40,7 +41,7 @@ def fetch_flight_details(prompt: str) -> FetchFlightSearchDetails:
 
     response = chat(
         model='gemma3:4b',  # or 'qwen3:8b' if available locally
-        messages=[{'role': 'user', 'content': extraction_prompt} ],
+        messages=[{'role': 'user', 'content': extraction_prompt}],
     )
 
     details_json = response['message']['content']
@@ -64,30 +65,31 @@ def fetch_flight_details(prompt: str) -> FetchFlightSearchDetails:
 
 def format_search_results(flight_result_dict) -> str:
     """Given the python dict, rewrite it in a Tabular format and present the output in a markdown table."""
-    
+
     extraction_prompt = f"""Given the python dict, Convert it into a different format (e.g., a table): {flight_result_dict}"""
-  
+
     response = chat(
         model='gemma3:4b',  # or 'qwen3:8b' if available locally
-        messages=[{'role': 'user', 'content': extraction_prompt} ],
+        messages=[{'role': 'user', 'content': extraction_prompt}],
     )
     details_json = response['message']['content']
     return details_json
 
+
 async def find_flights(search_details: FetchFlightSearchDetails):
     """Use the extracted flight details to search for flights using the Search module."""
     search = Search()
-    # results= asyncio.run(search.search_flights(origin=search_details.origin_iata, 
-    #                                       destination=search_details.destination_iata, 
+    # results= asyncio.run(search.search_flights(origin=search_details.origin_iata,
+    #                                       destination=search_details.destination_iata,
     #                                       departDate=search_details.departure_date, returnDate=search_details.return_date,
-    #                                       adults=search_details.adults, 
+    #                                       adults=search_details.adults,
     #                                       nonStop=search_details.non_stop,
     #                                       currency=search_details.currency,
-    #                                       travel_class=search_details.travel_class, 
-    #                                       children=search_details.children, 
+    #                                       travel_class=search_details.travel_class,
+    #                                       children=search_details.children,
     #                                       infants=search_details.infants,
     #                                       max_results=search_details.max_results))
-    
+
     try:
         search = Search()
         results = await search.search_flights(
@@ -111,11 +113,13 @@ async def find_flights(search_details: FetchFlightSearchDetails):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise
-    
+
     return results
 
+
 if __name__ == "__main__":
-    flight_details = fetch_flight_details("Find me the flights for 2 adults and one infant between Delhi and Bengaluru tommorrow. show me top 5 results and flights under 15k")
+    flight_details = fetch_flight_details(
+        "Find me the flights for 2 adults and one infant between Delhi and Bengaluru tommorrow. show me top 5 results and flights under 15k")
     print(flight_details)
     obj = Search()
     res = asyncio.run(obj.search_flights(flight_details))
