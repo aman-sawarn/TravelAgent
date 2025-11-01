@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 load_dotenv()
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.schemas import FetchedFlightSearchDetails
-# for key, value in os.environ.items():
-#     print(f"{key} = {value}")
 
 class Search:
     AMADEUS_BASE = os.getenv("AMADEUS_BASE", "https://test.api.amadeus.com")
@@ -19,7 +17,7 @@ class Search:
     OPENAI_KEY = os.getenv("OPENAI_KEY")
     _token_cache = {"token": None, "exp": 0}
     print(AMADEUS_KEY, AMADEUS_SECRET)
-    
+
     def __init__(self) -> None:
         pass
 
@@ -54,17 +52,17 @@ class Search:
 
         url = f"{self.AMADEUS_BASE}/v2/shopping/flight-offers"
         params = {
-                "originLocationCode": flight_search_data_object.origin_iata,
-                "destinationLocationCode": flight_search_data_object.destination_iata,
-                "departureDate": flight_search_data_object.departure_date,
-                "adults": flight_search_data_object.adults,
-                "infants": flight_search_data_object.infants,
-                "children": flight_search_data_object.children,
-                "currencyCode": flight_search_data_object.currency,
-                "travelClass": 'ECONOMY',
-                "nonStop": False,
-                "max": int(flight_search_data_object.max_results)
-            }
+            "originLocationCode": flight_search_data_object.origin_iata,
+            "destinationLocationCode": flight_search_data_object.destination_iata,
+            "departureDate": flight_search_data_object.departure_date,
+            "adults": flight_search_data_object.adults,
+            "infants": flight_search_data_object.infants,
+            "children": flight_search_data_object.children,
+            "currencyCode": flight_search_data_object.currency,
+            "travelClass": 'ECONOMY',
+            "nonStop": False,
+            "max": int(flight_search_data_object.max_results)
+        }
 
         # Only add optional parameters if they are valid
         if flight_search_data_object.return_date:

@@ -5,15 +5,18 @@ import json, os, sys
 from datetime import datetime
 from pydantic import BaseModel, Field, ValidationError
 import pandas as pd
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.search import Search
 from modules.schemas import FetchedFlightSearchDetails, FetchIntent
 from config.main_config import model_name
+from utils.output_reader import flight_offer_list_reader, read_flight_offer_
+
 
 def fetch_intent_of_the_query(prompt: str, model_name: str = model_name) -> FetchIntent:
-    """Extract the details from the prompt fetch the Intent of the user query"""
+	"""Extract the details from the prompt fetch the Intent of the user query"""
 
-    extraction_prompt = f"""
+	extraction_prompt = f"""
     You are a helpful Travel Agent that the user intent from user prompts.
 
     Extract the Intent from the prompt using given details for each prompt:
@@ -25,33 +28,33 @@ def fetch_intent_of_the_query(prompt: str, model_name: str = model_name) -> Fetc
 
     Provide the details strictly in JSON format.
     """
-    response = chat(
-        model=model_name,  # or 'qwen3:8b' if available locally
-        messages=[{'role': 'user', 'content': extraction_prompt}],
-    )
-    details_json = response['message']['content']
-    # --- Clean and extract valid JSON ---
-    try:
-        # Remove markdown fences or extra text if the LLM adds them
-        details_json = details_json.strip().strip("```").replace("json", "").strip()
-        parsed = json.loads(details_json)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
-    # --- Validate and format using the Pydantic model ---
-    try:
-        details = FetchIntent(**parsed)
-    except ValidationError as e:
-        print(FetchIntent)
-        raise ValueError(f"Parsed JSON does not match schema:\n{e}")
+	response = chat(
+		model=model_name,  # or 'qwen3:8b' if available locally
+		messages=[{'role': 'user', 'content': extraction_prompt}],
+	)
+	details_json = response['message']['content']
+	# --- Clean and extract valid JSON ---
+	try:
+		# Remove markdown fences or extra text if the LLM adds them
+		details_json = details_json.strip().strip("```").replace("json", "").strip()
+		parsed = json.loads(details_json)
+	except json.JSONDecodeError as e:
+		raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
+	# --- Validate and format using the Pydantic model ---
+	try:
+		details = FetchIntent(**parsed)
+	except ValidationError as e:
+		print(FetchIntent)
+		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
 
-    return details
+	return details
 
 
 def fetch_flight_details(prompt: str, model_name: str = model_name) -> FetchedFlightSearchDetails:
-    """Extract the details from the prompt required to search a Flight"""
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+	"""Extract the details from the prompt required to search a Flight"""
+	now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    extraction_prompt = f"""
+	extraction_prompt = f"""
     You are a helpful Travel Agent that extracts flight search details from user prompts.
     The Current date and time: {now}
 
@@ -75,97 +78,49 @@ def fetch_flight_details(prompt: str, model_name: str = model_name) -> FetchedFl
     Provide the details strictly in JSON format.
     """
 
-    response = chat(
-        model=model_name,  # or 'qwen3:8b' if available locally
-        messages=[{'role': 'user', 'content': extraction_prompt}],
-    )
+	response = chat(
+		model=model_name,  # or 'qwen3:8b' if available locally
+		messages=[{'role': 'user', 'content': extraction_prompt}],
+	)
 
-    details_json = response['message']['content']
-    # --- Clean and extract valid JSON ---
-    print("details_json : ", details_json)
-    try:
-        # Remove markdown fences or extra text if the LLM adds them
-        details_json = details_json.strip().strip("```").replace("json", "").strip()
-        parsed = json.loads(details_json)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
-    print("Parsed : ", parsed)
-    # --- Validate and format using the Pydantic model ---
-    try:
-        details = FetchedFlightSearchDetails(**parsed)
-    except ValidationError as e:
-        print(FetchedFlightSearchDetails)
-        raise ValueError(f"Parsed JSON does not match schema:\n{e}")
+	details_json = response['message']['content']
+	# --- Clean and extract valid JSON ---
+	print("details_json : ", details_json)
+	try:
+		# Remove markdown fences or extra text if the LLM adds them
+		details_json = details_json.strip().strip("```").replace("json", "").strip()
+		parsed = json.loads(details_json)
+	except json.JSONDecodeError as e:
+		raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
+	print("Parsed : ", parsed)
+	# --- Validate and format using the Pydantic model ---
+	try:
+		details = FetchedFlightSearchDetails(**parsed)
+	except ValidationError as e:
+		print(FetchedFlightSearchDetails)
+		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
 
-    return details
+	return details
+
 
 def flight_search_result_filter(responses: list) -> list:
-    """sort the results based on price"""
-    responses = list(sorted(responses, key=lambda x: x['price']['total']))
-    return responses
+	"""sort the results based on price"""
+	responses = list(sorted(responses, key=lambda x: x['price']['total']))
+	return responses
+
 
 def show_results_in_dataframe(responses: list) -> pd.DataFrame:
-    """Show the flight search results in a pandas DataFrame"""
-    df = pd.DataFrame(responses)
-    return df
+	"""Show the flight search results in a pandas DataFrame"""
+	df = pd.DataFrame(responses)
+	return df
 
 
-def read_flight_offer_(data):
-    """
-    Extracts and formats specific information from a flight offer dictionary.
-
-    Args:
-        data: A dictionary representing a flight offer.
-
-    Returns:
-        A dictionary containing selected key information from the flight offer.
-    """
-    readable_output = {}
-
-    itineraries = data.get('itineraries', [])
-    if itineraries:
-        readable_output['Flight Number'] = itineraries[0].get('segments', [])[0].get('number', 'N/A')
-        readable_output['Departure'] = itineraries[0].get('segments', [])[0].get('departure', {}).get('iataCode', 'N/A')
-        readable_output['Departure Time'] = itineraries[0].get('segments', [])[0].get('departure', {}).get('at', 'N/A')
-        readable_output['Arrival'] = itineraries[0].get('segments', [])[-1].get('arrival', {}).get('iataCode', 'N/A')
-        readable_output['Arrival Time'] = itineraries[0].get('segments', [])[-1].get('arrival', {}).get('at', 'N/A')
-        readable_output['Duration'] = itineraries[0].get('duration', 'N/A')
-        # Assuming the total number of stops is the sum of stops in each segment
-        total_stops = sum(segment.get('numberOfStops', 0) for segment in itineraries[0].get('segments', []))
-        readable_output['Number of Stops'] = total_stops
-
-
-    price_info = data.get('price', {})
-    if price_info:
-        grand_total = price_info.get('grandTotal', 'N/A')
-        currency = price_info.get('currency', 'N/A')
-        readable_output['Price'] = f"{grand_total} {currency}"
-
-
-    return readable_output
-
-# print(make_flight_offer_readable(dd))
-def flight_offer_list_reader(offers: list) -> list:
-    """Read a list of flight offers and return a list of readable flight details."""
-    offers = offers['results']['data']
-    readable_offers = []
-    for offer in offers:
-        readable_offer = read_flight_offer_(offer)
-        readable_offers.append(readable_offer)
-    return readable_offers
 if __name__ == "__main__":
-    prompt = "Find me the cheapest flights for 2 adults and one infant between Delhi and Bengaluru tommorrow. show me top 5 results and flights under 15k"
-    user_intent = fetch_intent_of_the_query(prompt)
-    print("*-" * 40)
-    flight_details = fetch_flight_details(prompt)
-    # print(user_intent.intent)
-    # print(flight_details)
-    obj = Search()
-    res = asyncio.run(obj.search_flights(flight_details))
-    print("-*" * 40)
-    # print(type(res['results']['data']))
-    # df = pd.DataFrame(res['results']['data'])
-    # print(df.columns)
-    print("-*" * 40)
-    print(flight_offer_list_reader(res))
+	prompt = "Find me the cheapest flights for 2 adults and one infant between Delhi and Bengaluru tommorrow. Show me top 5 results and flights under 15k"
+	user_intent = fetch_intent_of_the_query(prompt)
+	print("*-" * 40)
+	flight_details = fetch_flight_details(prompt)
+	obj = Search()
+	res = asyncio.run(obj.search_flights(flight_details))
 
+	print(flight_offer_list_reader(res))
