@@ -21,9 +21,14 @@ class FetchedFlightSearchDetails(BaseModel):
     travel_class: Optional[str] = Field("ECONOMY", description="Travel class for the flight search", max_length=20)
     non_stop: Optional[bool] = Field(False, description="Whether to search for non-stop flights only")
     max_results: Optional[int] = Field(10, description="Maximum number of flight options to return", ge=1)
-    max_price: Optional[float] = Field(None, description="Maximum price for the flight search", ge=0.0)
+    max_price: Optional[int] = Field(None, description="Maximum price for the flight search", ge=0.0)
+
+    def __str__(self) -> str:
+        return super().__str__()
 
 
 class FetchIntent(BaseModel):
     """Model to fetch flight search details from a given prompt"""
-    user_intent: str = Field(..., description="Intent of the given user Query", max_length=150)
+    intent: str = Field(..., description="Intent of the given user Query", max_length=150)
+    def __str__(self) -> str:
+        return super().__str__()

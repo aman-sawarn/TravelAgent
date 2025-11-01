@@ -20,7 +20,6 @@ class Search:
     _token_cache = {"token": None, "exp": 0}
     print(AMADEUS_KEY, AMADEUS_SECRET)
     
-
     def __init__(self) -> None:
         pass
 
@@ -81,7 +80,6 @@ class Search:
             raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
 
         return {"source": "amadeus", "results": r.json()}
-
 
 
 if __name__ == "__main__":
