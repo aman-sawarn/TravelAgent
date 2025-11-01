@@ -4,10 +4,11 @@ from ollama import chat
 import json, os, sys
 from datetime import datetime
 from pydantic import BaseModel, Field, ValidationError
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-class FetchFlightSearchDetails(BaseModel):
+class FetchedFlightSearchDetails(BaseModel):
     """Model to fetch flight search details from a given prompt"""
     origin_iata: str = Field(..., description="Origin city or Airport in the Journey", max_length=150)
     destination_iata: str = Field(..., description="Destination city or Airport in the Journey", max_length=150)
@@ -21,3 +22,8 @@ class FetchFlightSearchDetails(BaseModel):
     non_stop: Optional[bool] = Field(False, description="Whether to search for non-stop flights only")
     max_results: Optional[int] = Field(10, description="Maximum number of flight options to return", ge=1)
     max_price: Optional[float] = Field(None, description="Maximum price for the flight search", ge=0.0)
+
+
+class FetchIntent(BaseModel):
+    """Model to fetch flight search details from a given prompt"""
+    user_intent: str = Field(..., description="Intent of the given user Query", max_length=150)

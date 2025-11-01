@@ -7,16 +7,53 @@ from pydantic import BaseModel, Field, ValidationError
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.search import Search
-from modules.schemas import FetchFlightSearchDetails
-import pandas as pd
+from modules.schemas import FetchedFlightSearchDetails, FetchIntent
 
 
-def fetch_flight_details(prompt: str) -> FetchFlightSearchDetails:
+def fetch_intent_of_the_query(prompt: str, model_name: str = 'gemma3:4b') -> FetchIntent:
+    """Extract the details from the prompt fetch the Intent of the user query"""
+
+    extraction_prompt = f"""
+    You are a helpful Travel Agent that the user intent from user prompts.
+
+    Extract the Intent from the prompt using given details for each prompt:
+    1. Find Flights: If the user is looking to search for flights between two cities on a given date, return find_flights.
+    2. Find Cheapest Flight : If the user is looking to find the cheapest flight options available, return find_cheapest_flight.
+    3. Find Direct Flights : If the user is looking to find non-stop flight options available, return find_direct_flights.
+    
+    Prompt: "{prompt}"
+
+    Provide the details strictly in JSON format.
+    """
+    response = chat(
+        model=model_name,  # or 'qwen3:8b' if available locally
+        messages=[{'role': 'user', 'content': extraction_prompt}],
+    )
+    details_json = response['message']['content']
+    # --- Clean and extract valid JSON ---
+    try:
+        # Remove markdown fences or extra text if the LLM adds them
+        details_json = details_json.strip().strip("```").replace("json", "").strip()
+        parsed = json.loads(details_json)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
+
+    # --- Validate and format using the Pydantic model ---
+    try:
+        details = FetchIntent(**parsed)
+    except ValidationError as e:
+        print(FetchIntent)
+        raise ValueError(f"Parsed JSON does not match schema:\n{e}")
+
+    return details
+
+
+def fetch_flight_details(prompt: str, model_name: str = 'gemma3:4b') -> FetchedFlightSearchDetails:
     """Extract the details from the prompt required to search a Flight"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     extraction_prompt = f"""
-    You are a helpful assistant that extracts flight search details from user prompts.
+    You are a helpful Travel Agent that extracts flight search details from user prompts.
     The Current date and time: {now}
 
     Extract the following details from the prompt:
@@ -40,7 +77,7 @@ def fetch_flight_details(prompt: str) -> FetchFlightSearchDetails:
     """
 
     response = chat(
-        model='gemma3:4b',  # or 'qwen3:8b' if available locally
+        model=model_name,  # or 'qwen3:8b' if available locally
         messages=[{'role': 'user', 'content': extraction_prompt}],
     )
 
@@ -55,71 +92,18 @@ def fetch_flight_details(prompt: str) -> FetchFlightSearchDetails:
 
     # --- Validate and format using the Pydantic model ---
     try:
-        details = FetchFlightSearchDetails(**parsed)
+        details = FetchedFlightSearchDetails(**parsed)
     except ValidationError as e:
-        print(FetchFlightSearchDetails)
+        print(FetchedFlightSearchDetails)
         raise ValueError(f"Parsed JSON does not match schema:\n{e}")
 
     return details
 
 
-def format_search_results(flight_result_dict) -> str:
-    """Given the python dict, rewrite it in a Tabular format and present the output in a markdown table."""
-
-    extraction_prompt = f"""Given the python dict, Convert it into a different format (e.g., a table): {flight_result_dict}"""
-
-    response = chat(
-        model='gemma3:4b',  # or 'qwen3:8b' if available locally
-        messages=[{'role': 'user', 'content': extraction_prompt}],
-    )
-    details_json = response['message']['content']
-    return details_json
-
-
-async def find_flights(search_details: FetchFlightSearchDetails):
-    """Use the extracted flight details to search for flights using the Search module."""
-    search = Search()
-    # results= asyncio.run(search.search_flights(origin=search_details.origin_iata,
-    #                                       destination=search_details.destination_iata,
-    #                                       departDate=search_details.departure_date, returnDate=search_details.return_date,
-    #                                       adults=search_details.adults,
-    #                                       nonStop=search_details.non_stop,
-    #                                       currency=search_details.currency,
-    #                                       travel_class=search_details.travel_class,
-    #                                       children=search_details.children,
-    #                                       infants=search_details.infants,
-    #                                       max_results=search_details.max_results))
-
-    try:
-        search = Search()
-        results = await search.search_flights(
-            origin=search_details.origin_iata,
-            destination=search_details.destination_iata,
-            departDate=search_details.departure_date,
-            returnDate=search_details.return_date,
-            adults=search_details.adults,
-            children=search_details.children,
-            infants=search_details.infants,
-            max_price=int(search_details.max_price),
-            travel_class=search_details.travel_class,
-            non_stop=search_details.non_stop,
-            currency=search_details.currency,
-            max_results=search_details.max_results,
-        )
-        return results
-    except httpx.RequestError as e:
-        print(f"An error occurred while making the HTTP request: {e}")
-        raise
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        raise
-
-    return results
-
-
 if __name__ == "__main__":
     flight_details = fetch_flight_details(
         "Find me the flights for 2 adults and one infant between Delhi and Bengaluru tommorrow. show me top 5 results and flights under 15k")
+    print("*-" * 40)
     print(flight_details)
     obj = Search()
     res = asyncio.run(obj.search_flights(flight_details))
@@ -127,8 +111,3 @@ if __name__ == "__main__":
     print(type(res))
     print(res['source'])
     print(res['results'].keys())
-    # print(format_search_results(str(res)))
-    # df = pd.DataFrame(res['results']['data'])
-    # print(find_flights(flight_details))
-    # print(df.head())
-    # df.to_csv("flight_search_results.csv", index=False)
