@@ -1,5 +1,6 @@
 import os, sys, json
 from ollama import chat
+from datetime import datetime
 from pydantic import ValidationError
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.schemas import FetchedFlightSearchDetails, FetchIntent

@@ -1,23 +1,17 @@
 import asyncio
-import json
 import os
 import sys
-from datetime import datetime
-
 import pandas as pd
-
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.prompts import fetch_flight_details, fetch_intent_of_the_query
 from modules.search import Search
-from modules.schemas import FetchedFlightSearchDetails, FetchIntent
 from config.main_config import model_name
 from utils.output_reader import flight_offer_list_reader
 
 
-def flight_search_result_filter(responses: list) -> list:
+def flight_search_result_sorted(responses: list) -> list:
 	"""sort the results based on price"""
-	responses = list(sorted(responses, key=lambda x: x['price']['total']))
+	responses = list(sorted(responses, key=lambda x: x['price']['total'], reverse=False))
 	return responses
 
 
@@ -34,5 +28,8 @@ if __name__ == "__main__":
 	flight_details = fetch_flight_details(prompt)
 	obj = Search()
 	res = asyncio.run(obj.search_flights(flight_details))
+	if user_intent == "find_cheapest_flight":
+		sorted_responses = flight_search_result_sorted(res['results']['data'])
+		res['results']['data'] = sorted_responses
 
 	print(flight_offer_list_reader(res))

@@ -1,16 +1,14 @@
 import os
 import sys
 from typing import Optional
-
 from pydantic import BaseModel, Field
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class FetchIntent(BaseModel):
 	"""Model to fetch intent for a given user"""
 	intent: str = Field(..., description="", max_length=150)
-
+	
 
 class FetchedFlightSearchDetails(BaseModel):
 	"""Model to fetch flight search details from a given prompt"""
