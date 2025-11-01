@@ -1,7 +1,8 @@
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import wikipedia
 import re
+
+import torch
+import wikipedia
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # -----------------------------
 # Step 0: Local model path

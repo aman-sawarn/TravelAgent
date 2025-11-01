@@ -1,9 +1,9 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from langchain_huggingface import HuggingFacePipeline
 from langchain.agents import initialize_agent, Tool
 from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
+from langchain_huggingface import HuggingFacePipeline
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # -----------------------------
 # Step 1: Load local model

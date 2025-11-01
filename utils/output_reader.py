@@ -1,20 +1,19 @@
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def read_flight_offer_(data):
 	"""
-    Extracts and formats specific information from a flight offer dictionary.
+	Extracts and formats specific information from a flight offer dictionary.
+	Args:
+		data: A dictionary representing a flight offer.
+	Returns:
+		A dictionary containing selected key information from the flight offer.
+	"""
 
-    Args:
-        data: A dictionary representing a flight offer.
-
-    Returns:
-        A dictionary containing selected key information from the flight offer.
-    """
 	readable_output = {}
-
 	itineraries = data.get('itineraries', [])
 	if itineraries:
 		readable_output['Flight Number'] = itineraries[0].get('segments', [])[0].get('number', 'N/A')
@@ -23,7 +22,7 @@ def read_flight_offer_(data):
 		readable_output['Arrival'] = itineraries[0].get('segments', [])[-1].get('arrival', {}).get('iataCode', 'N/A')
 		readable_output['Arrival Time'] = itineraries[0].get('segments', [])[-1].get('arrival', {}).get('at', 'N/A')
 		readable_output['Duration'] = itineraries[0].get('duration', 'N/A')
-		# Assuming the total number of stops is the sum of stops in each segment
+		"""Assuming the total number of stops is the sum of stops in each segment"""
 		total_stops = sum(segment.get('numberOfStops', 0) for segment in itineraries[0].get('segments', []))
 		readable_output['Number of Stops'] = total_stops
 

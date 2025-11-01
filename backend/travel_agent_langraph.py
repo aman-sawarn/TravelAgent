@@ -1,15 +1,14 @@
 
-from typing import TypedDict, List, Optional
 import os
+from typing import TypedDict, List, Optional
 
-
+from dotenv import load_dotenv
+from langchain.chat_models import ChatHuggingFace
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.tools import tool
 # LangGraph / LangChain core imports
 from langgraph.graph import StateGraph, START, END
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain.chat_models import init_chat_model
-from langchain_core.tools import tool
-from langchain.chat_models import ChatHuggingFace
-from dotenv import load_dotenv
+
 load_dotenv()
 
 # --------------------
@@ -198,7 +197,6 @@ def hotel_tool_node(state: TravelState) -> TravelState:
 # --------------------
 # Build the StateGraph
 # --------------------
-from typing_extensions import TypedDict as _TD
 
 
 # Create the graph builder using our state schema

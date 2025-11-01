@@ -1,8 +1,11 @@
+import os
+import sys
 from typing import Optional
-from ollama import chat 
-import sys, os
+
+from ollama import chat
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from modules.search import Search
+
 
 def add(a,b):
   """Adds two numbers

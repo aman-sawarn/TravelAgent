@@ -1,4 +1,4 @@
-import os, sys
+import os
 
 # Get the absolute path of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

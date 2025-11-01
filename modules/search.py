@@ -1,12 +1,14 @@
-import os, sys
+import asyncio
+import os
+import sys
 import time
 import httpx
-import asyncio
-from fastapi import HTTPException
 from dotenv import load_dotenv
+from fastapi import HTTPException
 load_dotenv()
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.schemas import FetchedFlightSearchDetails
+
 
 class Search:
     AMADEUS_BASE = os.getenv("AMADEUS_BASE", "https://test.api.amadeus.com")
