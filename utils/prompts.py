@@ -17,6 +17,7 @@ def fetch_intent_of_the_query(prompt: str, model_name: str = model_name) -> Fetc
     1. Find Flights: If the user is looking to search for flights between two cities on a given date, return find_flights in this case.
     2. Find Cheapest Flight : If the user is looking to find the cheapest flight options available, return "find_cheapest_flight" in this case.
     3. Find Direct Flights : If the user is looking to find non-stop flight options available, return "find_direct_flights" in this case.
+	4. Other: If the user is not looking to search for flights or hotels, return "other" in this case.
 
     Prompt: "{prompt}"
 
