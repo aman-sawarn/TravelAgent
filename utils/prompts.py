@@ -3,28 +3,28 @@ from datetime import datetime
 from ollama import chat
 from pydantic import ValidationError
 
-from app.core.schemas import FetchedFlightSearchDetails, FetchIntent
-from app.config.main_config import model_name
+from utils.schemas import FetchedFlightSearchDetails, FetchIntent
+from config.main_config import model_name
 
 
-def fetch_intent_of_the_query(prompt: str, model_name: str = model_name) -> FetchIntent:
+def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -> FetchIntent:
 	"""Extract the details from the prompt fetch the Intent of the user query"""
 
 	extraction_prompt = f"""
     You are a helpful Travel Agent that the user intent from user prompts.
 
     Extract the Intent from the prompt using given details for each prompt:
-    1. Find Flights: If the user is looking to search for flights between two cities on a given date, return find_flights in this case.
-    2. Find Cheapest Flight : If the user is looking to find the cheapest flight options available, return "find_cheapest_flight" in this case.
-    3. Find Direct Flights : If the user is looking to find non-stop flight options available, return "find_direct_flights" in this case.
-	4. Other: If the user is not looking to search for flights or hotels, return "other" in this case.
+    
+    1. Find Cheapest Flight : If the user is looking to find the cheapest flight options available, return "find_cheapest_flight" in this case.
+    2. Find Direct Flights : If the user is looking to find non-stop flight options available, return "find_direct_flights" in this case.
+	3. Other: If the user is not looking to search for flights or hotels, return "other" in this case.
 
     Prompt: "{prompt}"
 
     Provide the details strictly in JSON format.
     """
 	response = chat(
-		model=model_name,  # or 'qwen3:8b' if available locally
+		model=model_to_be_used,  # or 'qwen3:8b' if available locally
 		messages=[{'role': 'user', 'content': extraction_prompt}],
 	)
 	details_json = response['message']['content']
@@ -90,4 +90,3 @@ def fetch_flight_details(user_prompt: str, current_model: str = model_name) -> F
 		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
 
 	return details
-

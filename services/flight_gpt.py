@@ -3,10 +3,10 @@ import os
 import sys
 import pandas as pd
 
-from app.core.prompts import fetch_flight_details, fetch_intent_of_the_query
-from app.services.flight_service import Search
-from app.config.main_config import model_name
-from app.utils.output_reader import flight_offer_list_reader
+from utils.prompts import fetch_flight_details, fetch_intent_of_the_query
+from services.flight_search import Search
+from config.main_config import model_name
+from utils.output_reader import flight_offer_list_reader
 
 
 def flight_search_result_sorted(responses: list) -> list:

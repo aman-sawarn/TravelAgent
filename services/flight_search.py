@@ -68,7 +68,7 @@ class Search:
                 max_results (int): The maximum number of results to return.
                 return_date (str, optional): The return date in YYYY-MM-DD format.
                 max_price (float, optional): The maximum price.
-        Returns:."
+        Returns:.
             dict: The search results.
         """
         token = await self.get_amadeus_token()
