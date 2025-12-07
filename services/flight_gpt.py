@@ -17,7 +17,7 @@ def flight_search_result_sorted(responses: list) -> list:
 
 
 if __name__ == "__main__":
-	prompt = "Find me direct flights between Madrid and London tommorrow."
+	prompt = "Find me cheapest flights between Madrid and London tommorrow."
 	user_intent = fetch_intent_of_the_query(prompt) 
 	print("*-" * 40)
 	print("intent : ", user_intent)
@@ -26,13 +26,13 @@ if __name__ == "__main__":
 	
 	if user_intent.intent == "find_cheapest_flight":
 		print(f"{user_intent.intent} detected, using tool find_cheapest_flights")
-		flight_details = fetch_cheapest_flight_details(prompt)
-		print("flight_details : ", flight_details)
-		res = asyncio.run(obj.search_cheapest_flights_on_a_date_range(flight_details))
-		print("Amadeus Response:", res)
+		flight_details = fetch_cheapest_flight_details(prompt) 
+		print("flight_details : ", flight_details) 
+		res = asyncio.run(obj.search_cheapest_flights_date_range(flight_details)) 
+		print("Amadeus Response:", res) 
 		
-	elif user_intent.intent in ["find_flights", "find_direct_flights"]:
-		print(f"{user_intent.intent} detected, using tool find_flights")
+	elif user_intent.intent == "find_direct_flights": 
+		print(f"{user_intent.intent} detected, using tool find_flights") 
 		flight_details = fetch_standard_flight_details(prompt)
 		print("flight_details : ", flight_details)
 		res = asyncio.run(obj.search_flights_on_a_date(flight_details))

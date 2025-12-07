@@ -85,7 +85,6 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 	except ValidationError as e:
 		print(FlightSearchDetails)
 		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
-
 	return details
 
 
@@ -98,12 +97,12 @@ def fetch_cheapest_flight_details(user_prompt: str, current_model: str = model_n
 	The Current date and time: {now}
 
 	Extract the following details from the prompt:
-	1. "origin_iata": IATA code for Origin city
-	2. "destination_iata": IATA code for Destination city
-	3. "departure_date": Departure date in YYYY-MM-DD format (Optional).
-	4. "return_date": Return date in YYYY-MM-DD format (if mentioned)
-	5. "non_stop": Whether to search for non-stop flights only (default is False)
-	6. "max_price": Maximum price for the flight search (if mentioned). Return value as a Int.
+	1. "origin": IATA code for Origin city or Airport (e.g. LON for London, NYC for New York, DEL for Delhi).
+	2. "destination": IATA code for Destination city or Airport (e.g. LON for London, NYC for New York, DEL for Delhi).
+	3. "departure_date": Departure date in YYYY-MM-DD format (Optional). Can also be a date range like "YYYY-MM-DD,YYYY-MM-DD".
+	4. "nonStop": Whether to search for non-stop flights only (default is False).
+	5. "maxPrice": Maximum price for the flight search (if mentioned). Return value as an Int.
+	6. "oneWay": Whether to search for one-way flights only (default is False).
 
 	Prompt: "{user_prompt}"
 
@@ -121,7 +120,6 @@ def fetch_cheapest_flight_details(user_prompt: str, current_model: str = model_n
 	try:
 		details = CheapestFlightSearchDetails(**parsed)
 	except ValidationError as e:
-		print(CheapestFlightSearchDetails)
 		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
 
 	return details

@@ -12,7 +12,7 @@ class FlightSearchDetails(BaseModel):
 	"""Model to fetch flight search details for standard/direct flight search"""
 	origin_iata: str = Field(..., description="Origin city or Airport in the Journey", max_length=150)
 	destination_iata: str = Field(..., description="Destination city or Airport in the Journey", max_length=150)
-	departure_date: str = Field(..., description="Departure date in YYYY-MM-DD format", max_length=10)
+	departure_date: Optional[str] = Field(None, description="Departure date in YYYY-MM-DD format", max_length=10)
 	return_date: Optional[str] = Field(None, description="Return date in YYYY-MM-DD format", max_length=10)
 	adults: Optional[int] = Field(1, description="Number of adult passengers", ge=1)
 	children: Optional[int] = Field(0, description="Number of children passengers", ge=0)
@@ -25,15 +25,11 @@ class FlightSearchDetails(BaseModel):
 
 class CheapestFlightSearchDetails(BaseModel):
 	"""Model to fetch flight search details for finding cheapest flight dates"""
-	origin_iata: str = Field(..., description="Origin city or Airport in the Journey", max_length=150)
-	destination_iata: str = Field(..., description="Destination city or Airport in the Journey", max_length=150)
-	departure_date: Optional[str] = Field(None, description="Departure date in YYYY-MM-DD format (Optional)", max_length=10)
-	return_date: Optional[str] = Field(None, description="Return date in YYYY-MM-DD format", max_length=10)
-	non_stop: Optional[bool] = Field(False, description="Whether to search for non-stop flights only")
-	max_price: Optional[int] = Field(None, description="Maximum price for the flight search", ge=0.0)
-
-	# def __str__(self) -> str:
-	# 	return f"""{self.origin_iata} -> {self.destination_iata} on {self.departure_date}),
-	# 	  Adults: {self.adults}, Children: {self.children}, Infants: {self.infants}, Currency: {self.currency},
-	# 	  Class: {self.travel_class}, Non-stop: {self.non_stop}, Max Results: {self.max_results},
-	# 	  Max Price: {self.max_price}, Return Date: {self.return_date}"""
+	origin: str = Field(..., description="Origin city or Airport in the Journey", max_length=150)
+	destination: str = Field(..., description="Destination city or Airport in the Journey", max_length=150)
+	departure_date: Optional[str] = Field(None, description="the date, or range of dates, on which the flight will depart from the origin. Dates are specified in the ISO 8601 YYYY-MM-DD format, e.g. 2017-12-25. Ranges are specified with a comma and are inclusive", max_length=21)
+	return_date: Optional[str] = Field(None, description="the date, or range of dates, on which the flight will depart from the origin. Dates are specified in the ISO 8601 YYYY-MM-DD format, e.g. 2017-12-25. Ranges are specified with a comma and are inclusive", max_length=21)
+	nonStop: Optional[bool] = Field(False, description="Whether to search for non-stop flights only")
+	maxPrice: Optional[int] = Field(None, description="Maximum price for the flight search", ge=0.0)
+	oneWay: Optional[bool] = Field(True, description="Whether to search for one-way flights only")
+	
