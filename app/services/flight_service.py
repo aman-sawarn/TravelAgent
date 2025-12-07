@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 load_dotenv()
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from modules.schemas import FetchedFlightSearchDetails
+from app.core.schemas import FetchedFlightSearchDetails
 
 
 class Search:
@@ -18,7 +18,7 @@ class Search:
     BOOKING_KEY = os.getenv("BOOKING_API_KEY")
     OPENAI_KEY = os.getenv("OPENAI_KEY")
     _token_cache = {"token": None, "exp": 0}
-    print(AMADEUS_KEY, AMADEUS_SECRET)
+    
 
     def __init__(self) -> None:
         pass

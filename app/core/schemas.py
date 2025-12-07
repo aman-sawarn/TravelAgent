@@ -1,8 +1,6 @@
-import os
 import sys
 from typing import Optional
 from pydantic import BaseModel, Field
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class FetchIntent(BaseModel):
@@ -26,4 +24,7 @@ class FetchedFlightSearchDetails(BaseModel):
 	max_price: Optional[int] = Field(None, description="Maximum price for the flight search", ge=0.0)
 
 	def __str__(self) -> str:
-		return super().__str__()
+		return f"""{self.origin_iata} -> {self.destination_iata} on {self.departure_date}),
+		  Adults: {self.adults}, Children: {self.children}, Infants: {self.infants}, Currency: {self.currency}, 
+		  Class: {self.travel_class}, Non-stop: {self.non_stop}, Max Results: {self.max_results}, 
+		  Max Price: {self.max_price}, Return Date: {self.return_date}"""

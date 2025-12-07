@@ -1,6 +1,11 @@
 
 import os
+import asyncio
+import json
 from typing import TypedDict, List, Optional
+
+from app.services.flight_service import Search
+from app.core.schemas import FetchedFlightSearchDetails
 
 from dotenv import load_dotenv
 from langchain.chat_models import ChatHuggingFace
@@ -28,12 +33,34 @@ class TravelState(TypedDict):
 # --------------------
 @tool
 def flight_search(origin: str, dest: str, depart_date: str, return_date: Optional[str] = None, passengers: int = 1):
-    """Mock flight search tool. Replace with real flights API (Amadeus, Skyscanner, etc.)."""
-    # In a real implementation call an external API and return structured results.
-    return [
-    {"carrier": "ExampleAir", "price": "₹12,345", "depart": depart_date, "origin": origin, "dest": dest, "flight_no": "EA123"},
-    {"carrier": "DemoJet", "price": "₹15,200", "depart": depart_date, "origin": origin, "dest": dest, "flight_no": "DJ456"},
-    ]
+    """
+    Search for flights using Amadeus API via the Search service.
+    Returns a list of flight offers or an error message.
+    """
+    try:
+        # Construct the search details object
+        # Note: Mapping tool args to the schema.
+        details = FetchedFlightSearchDetails(
+            origin_iata=origin,
+            destination_iata=dest,
+            departure_date=depart_date,
+            return_date=return_date,
+            adults=passengers,
+            # Default values for fields not exposed to the tool yet
+            children=0,
+            infants=0,
+            currency="INR",
+            travel_class="ECONOMY",
+            non_stop=False,
+            max_results=5
+        )
+        
+        search_service = Search()
+        # Execute async search synchronously
+        results = asyncio.run(search_service.search_flights(details))
+        return results
+    except Exception as e:
+        return {"error": f"Flight search failed: {str(e)}"}
 
 
 @tool
@@ -44,7 +71,8 @@ def hotel_search(city: str, checkin: str, checkout: str, guests: int = 1):
     {"hotel": "Demo Inn", "price_per_night": "₹3,200", "rating": 3.9},
     ]
 
-os.environ["OPENAI_API_KEY"] = os.getenv(OPENAI_KEY)
+if os.getenv("OPENAI_KEY") and not os.getenv("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_KEY")
 # Initialize LLM (OpenAI via langchain-openai)
 # --------------------
 # Make sure OPENAI_API_KEY is set in env

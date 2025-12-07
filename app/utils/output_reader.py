@@ -1,8 +1,6 @@
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 def read_flight_offer_(data):
 	"""
@@ -37,8 +35,8 @@ def read_flight_offer_(data):
 
 def flight_offer_list_reader(offers: list) -> list:
 	"""Read a list of flight offers and return a list of readable flight details."""
-	offers = offers['results']['data']
-	# print("Offer Keys : ", offers[0])
+	# offers = offers['results']['data']
+	print(len(offers))
 	readable_offers = []
 	for offer in offers:
 		readable_offer = read_flight_offer_(offer)

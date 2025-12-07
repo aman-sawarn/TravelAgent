@@ -1,10 +1,10 @@
-import os, sys, json
-from ollama import chat
+import json
 from datetime import datetime
+from ollama import chat
 from pydantic import ValidationError
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from modules.schemas import FetchedFlightSearchDetails, FetchIntent
-from config.main_config import model_name
+
+from app.core.schemas import FetchedFlightSearchDetails, FetchIntent
+from app.config.main_config import model_name
 
 
 def fetch_intent_of_the_query(prompt: str, model_name: str = model_name) -> FetchIntent:
@@ -82,9 +82,11 @@ def fetch_flight_details(user_prompt: str, current_model: str = model_name) -> F
 		raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
 	# --- Validate and format using the Pydantic model ---
 	try:
+		# FIX: Use FetchedFlightSearchDetails instead of FetchIntent
 		details = FetchedFlightSearchDetails(**parsed)
 	except ValidationError as e:
 		print(FetchedFlightSearchDetails)
 		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
 
 	return details
+
