@@ -57,7 +57,7 @@ def flight_search(origin: str, dest: str, depart_date: str, return_date: Optiona
         
         search_service = Search()
         # Execute async search synchronously
-        results = asyncio.run(search_service.search_flights(details))
+        results = asyncio.run(search_service.search_flights_on_a_date(details))
         return results
     except Exception as e:
         return {"error": f"Flight search failed: {str(e)}"}

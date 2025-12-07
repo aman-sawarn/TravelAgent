@@ -52,7 +52,7 @@ class Search:
         }
         return self._token_cache["token"]
 
-    async def search_flights(self, flight_search_data_object: FetchedFlightSearchDetails) -> dict:
+    async def search_flights_on_a_date(self, flight_search_data_object: FetchedFlightSearchDetails) -> dict:
         """Search for flights based on the provided search criteria.
 
         Args:
@@ -102,18 +102,58 @@ class Search:
 
         return {"source": "amadeus", "results": r.json()}
 
+    async def search_cheapest_flights_on_a_date_range(self, flight_search_data_object: FetchedFlightSearchDetails) -> dict:
+        """
+        Search for cheapest flight dates.
+        Endpoint: /v1/shopping/flight-dates
+        """
+        token = await self.get_amadeus_token()
+
+        url = f"{self.AMADEUS_BASE}/v1/shopping/flight-dates"
+        params = {
+            "origin": flight_search_data_object.origin_iata,
+            "destination": flight_search_data_object.destination_iata,
+            # 'oneWay': 'true' if no return date? Default seems to be false (round trip) if 'duration' provided, or maybe just list dates.
+            # API docs say: either oneWay=true OR duration (comma separated list of days)
+        }
+        
+        # If no return date is provided, we assume one-way for simplicity unless logic dictates otherwise
+        if not flight_search_data_object.return_date:
+            params["oneWay"] = "true"
+        # else:
+            # If return date is provided, usually flight-dates expects 'duration' (length of stay), not a specific return date.
+            # For now, let's keep it simple. If the user wants specific dates, they use flight-offers.
+            # flight-dates is usually "I want to go roughly around this time, what days are cheap?"
+            
+        # Optional: View-window (if supported) or just rely on default (future dates)
+        
+        # Add filtering if available
+        if flight_search_data_object.non_stop:
+            params["nonStop"] = "true"
+
+        if flight_search_data_object.max_price is not None:
+            params["maxPrice"] = int(flight_search_data_object.max_price)
+
+        # Execute request
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
+
+        if r.status_code != 200:
+            raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
+
+        return {"source": "amadeus", "results": r.json()}
+
 
 if __name__ == "__main__":
     search = Search()
     flight_search_data = FetchedFlightSearchDetails(
-        origin_iata="DEL",
-        destination_iata="BLR",
-        departure_date="2025-12-12",
-        adults=1
-    )
+        origin_iata="MAD",
+        destination_iata="LON",
+        departure_date="2025-05-12")
+        
     try:
         print("Starting flight search...")
-        results = asyncio.run(search.search_flights(flight_search_data))
+        results = asyncio.run(search.search_cheapest_flights_on_a_date_range(flight_search_data))
         print(results)
         print("Search successful!")
     except Exception as e:
