@@ -12,7 +12,7 @@ load_dotenv(dotenv_path)
 
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.schemas import FetchedFlightSearchDetails
+from utils.schemas import FlightSearchDetails, CheapestFlightSearchDetails
 
 
 class Search:
@@ -52,23 +52,12 @@ class Search:
         }
         return self._token_cache["token"]
 
-    async def search_flights_on_a_date(self, flight_search_data_object: FetchedFlightSearchDetails) -> dict:
+    async def search_flights_on_a_date(self, flight_search_data_object: FlightSearchDetails) -> dict:
         """Search for flights based on the provided search criteria.
 
         Args:
-            flight_search_data_object (FetchedFlightSearchDetails): The search criteria.
-            FetchedFlightSearchDetails: The search criteria.
-                origin_iata (str): The origin airport IATA code.
-                destination_iata (str): The destination airport IATA code.
-                departure_date (str): The departure date in YYYY-MM-DD format.
-                adults (int): The number of adults.
-                infants (int): The number of infants.
-                children (int): The number of children.
-                currency (str): The currency code.
-                max_results (int): The maximum number of results to return.
-                return_date (str, optional): The return date in YYYY-MM-DD format.
-                max_price (float, optional): The maximum price.
-        Returns:.
+            flight_search_data_object (FlightSearchDetails): The search criteria.
+        Returns:
             dict: The search results.
         """
         token = await self.get_amadeus_token()
@@ -84,10 +73,13 @@ class Search:
             "currencyCode": flight_search_data_object.currency,
             "travelClass": 'ECONOMY',
             "nonStop": False,
-            "max": int(flight_search_data_object.max_results)
+            "max": int(flight_search_data_object.max_results or 10)
         }
 
         # Only add optional parameters if they are valid
+        if flight_search_data_object.departure_date:
+            params["departureDate"] = flight_search_data_object.departure_date
+
         if flight_search_data_object.return_date:
             params["returnDate"] = flight_search_data_object.return_date
 
@@ -102,7 +94,7 @@ class Search:
 
         return {"source": "amadeus", "results": r.json()}
 
-    async def search_cheapest_flights_on_a_date_range(self, flight_search_data_object: FetchedFlightSearchDetails) -> dict:
+    async def search_cheapest_flights_on_a_date_range(self, flight_search_data_object: CheapestFlightSearchDetails) -> dict:
         """
         Search for cheapest flight dates.
         Endpoint: /v1/shopping/flight-dates
@@ -127,9 +119,11 @@ class Search:
             
         # Optional: View-window (if supported) or just rely on default (future dates)
         
-        # Add filtering if available
         if flight_search_data_object.non_stop:
             params["nonStop"] = "true"
+
+        if flight_search_data_object.departure_date:
+            params["departureDate"] = flight_search_data_object.departure_date
 
         if flight_search_data_object.max_price is not None:
             params["maxPrice"] = int(flight_search_data_object.max_price)
@@ -139,7 +133,7 @@ class Search:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
 
         if r.status_code != 200:
-            raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
+            raise HTTPException(status_code=r.status_code, detail=f"Amadeus cheapest flight search failed: {r.text}")
 
         return {"source": "amadeus", "results": r.json()}
 
@@ -149,7 +143,7 @@ if __name__ == "__main__":
     flight_search_data = FetchedFlightSearchDetails(
         origin_iata="MAD",
         destination_iata="LON",
-        departure_date="2025-05-12")
+        departure_date="2026-05-12")
         
     try:
         print("Starting flight search...")

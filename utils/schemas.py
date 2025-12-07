@@ -8,8 +8,8 @@ class FetchIntent(BaseModel):
 	intent: str = Field(..., description="", max_length=150)
 	
 
-class FetchedFlightSearchDetails(BaseModel):
-	"""Model to fetch flight search details from a given prompt"""
+class FlightSearchDetails(BaseModel):
+	"""Model to fetch flight search details for standard/direct flight search"""
 	origin_iata: str = Field(..., description="Origin city or Airport in the Journey", max_length=150)
 	destination_iata: str = Field(..., description="Destination city or Airport in the Journey", max_length=150)
 	departure_date: str = Field(..., description="Departure date in YYYY-MM-DD format", max_length=10)
@@ -21,6 +21,15 @@ class FetchedFlightSearchDetails(BaseModel):
 	travel_class: Optional[str] = Field("ECONOMY", description="Travel class for the flight search", max_length=20)
 	non_stop: Optional[bool] = Field(False, description="Whether to search for non-stop flights only")
 	max_results: Optional[int] = Field(10, description="Maximum number of flight options to return", ge=1)
+	max_price: Optional[int] = Field(None, description="Maximum price for the flight search", ge=0.0)
+
+class CheapestFlightSearchDetails(BaseModel):
+	"""Model to fetch flight search details for finding cheapest flight dates"""
+	origin_iata: str = Field(..., description="Origin city or Airport in the Journey", max_length=150)
+	destination_iata: str = Field(..., description="Destination city or Airport in the Journey", max_length=150)
+	departure_date: Optional[str] = Field(None, description="Departure date in YYYY-MM-DD format (Optional)", max_length=10)
+	return_date: Optional[str] = Field(None, description="Return date in YYYY-MM-DD format", max_length=10)
+	non_stop: Optional[bool] = Field(False, description="Whether to search for non-stop flights only")
 	max_price: Optional[int] = Field(None, description="Maximum price for the flight search", ge=0.0)
 
 	# def __str__(self) -> str:

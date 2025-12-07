@@ -2,8 +2,9 @@ import asyncio
 import os
 import sys
 import pandas as pd
-
-from utils.prompts import fetch_flight_details, fetch_intent_of_the_query
+# Add project root to sys.path (parent of services/)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.prompts import fetch_standard_flight_details, fetch_cheapest_flight_details, fetch_intent_of_the_query
 from services.flight_search import Search
 from config.main_config import model_name
 from utils.output_reader import flight_offer_list_reader
@@ -16,27 +17,32 @@ def flight_search_result_sorted(responses: list) -> list:
 
 
 if __name__ == "__main__":
-	prompt = "Find me the flights for 2 adults and one infant between Delhi and Bengaluru tommorrow. Show me top 5 results and flights under 15k"
+	prompt = "Find me direct flights between Madrid and London tommorrow."
 	user_intent = fetch_intent_of_the_query(prompt) 
 	print("*-" * 40)
 	print("intent : ", user_intent)
-	flight_details = fetch_flight_details(prompt)
-	print("flight_details : ", flight_details)
-	# obj = Search()
-	# res = asyncio.run(obj.search_flights(flight_details))
-	# print(res.keys())
-	# print(user_intent.intent)
-	# if user_intent.intent == "find_cheapest_flight":
-	# 	print(f"{user_intent.intent} detected, using tool find_cheapest_flights")
-	# 	ans = flight_offer_list_reader(res['results']['data'])
-	# 	sorted_responses = flight_offer_list_reader(ans) 
-	# 	print(sorted_responses)
-	# elif user_intent == "find_flights":
-	# 	print(f"{user_intent.intent} detected, using tool find_flights")
-	# 	ans = flight_offer_list_reader(res['results']['data'])
-	# 	print(ans)
-	# else:
-	# 	pass
+	
+	obj = Search()
+	
+	if user_intent.intent == "find_cheapest_flight":
+		print(f"{user_intent.intent} detected, using tool find_cheapest_flights")
+		flight_details = fetch_cheapest_flight_details(prompt)
+		print("flight_details : ", flight_details)
+		res = asyncio.run(obj.search_cheapest_flights_on_a_date_range(flight_details))
+		print("Amadeus Response:", res)
+		
+	elif user_intent.intent in ["find_flights", "find_direct_flights"]:
+		print(f"{user_intent.intent} detected, using tool find_flights")
+		flight_details = fetch_standard_flight_details(prompt)
+		print("flight_details : ", flight_details)
+		res = asyncio.run(obj.search_flights_on_a_date(flight_details))
+		if 'data' in res.get('results', {}):
+			ans = flight_offer_list_reader(res['results']['data'])
+			print(ans)
+		else:
+			print("No flight data found.")
+	else:
+		print(f"Unknown intent: {user_intent.intent} or 'other'")
 
 
 	print("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
