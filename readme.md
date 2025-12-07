@@ -16,3 +16,11 @@
 2. Create a Conda environment and set it up with the libraries: 
     `conda env create -f environment.yml -n travelgpt`
 3. Activate the environment : `conda activate travelgpt`
+
+
+## Steps to build the TravelGPT Agent:
+1. Build a Flight Seach Functionality
+2. Build a Hotel Search Functionality
+<!-- 3. Build a Car Rental Search Functionality -->
+
+### 1. Flight Search Functionality
