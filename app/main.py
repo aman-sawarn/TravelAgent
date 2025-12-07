@@ -4,8 +4,8 @@ import asyncio
 import json
 from typing import TypedDict, List, Optional
 
-from app.services.flight_service import Search
-from app.core.schemas import FetchedFlightSearchDetails
+from services.flight_search import Search
+from core.schemas import FetchedFlightSearchDetails
 
 from dotenv import load_dotenv
 from langchain.chat_models import ChatHuggingFace

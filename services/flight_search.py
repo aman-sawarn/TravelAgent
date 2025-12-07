@@ -5,7 +5,7 @@ import time
 import httpx
 from dotenv import load_dotenv
 from fastapi import HTTPException
-
+from langchain_core.tools import tool
 # Explicitly load .env from the project root (parent of services/)
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
 load_dotenv(dotenv_path)
@@ -14,7 +14,7 @@ load_dotenv(dotenv_path)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.schemas import FlightSearchDetails, CheapestFlightSearchDetails
 
-
+@tool
 class Search:
     def __init__(self) -> None:
         self.AMADEUS_BASE = os.getenv("AMADEUS_BASE", "https://test.api.amadeus.com")
@@ -88,7 +88,8 @@ class Search:
 
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
-
+        print("params : ", params)
+        print("url : ", url)
         if r.status_code != 200:
             raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
 
@@ -105,20 +106,20 @@ class Search:
         params = {
             "origin": flight_search_data_object.origin,
             "destination": flight_search_data_object.destination,
+            "oneWay": flight_search_data_object.oneWay,
         }
-              
-        # Optional: View-window (if supported) or just rely on default (future dates)
         
         if flight_search_data_object.return_date:
-            params["oneWay"] = "false"
+            params["oneWay"] = False
             params["returnDate"] = flight_search_data_object.return_date
         else:
-             params["oneWay"] = "true"
+             params["oneWay"] = True
 
         if flight_search_data_object.departure_date:
             params["departureDate"] = flight_search_data_object.departure_date
 
-        # Execute request
+        print("params : ", params)
+        print("url : ", url)
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
 
@@ -134,14 +135,16 @@ if __name__ == "__main__":
         origin_iata="MAD",
         destination_iata="LON",
         departure_date="2026-05-12")
-    flight_search_data_object = CheapestFlightSearchDetails(
-        origin="MAD",
-        destination="LON",
-        departure_date="2026-05-12")
+    
+    flight_search_cheapest_data = CheapestFlightSearchDetails(
+            origin="BOM",
+            destination="DEL",
+            departure_date="2026-05-12")
     try:
         print("Starting flight search...")
-        results = asyncio.run(search.search_cheapest_flights_date_range(flight_search_data_object))
+        # results = asyncio.run(search.search_flights_on_a_date(flight_search_data))
+        results = asyncio.run(search.search_cheapest_flights_date_range(flight_search_cheapest_data))
         print(results)
         print("Search successful!")
     except Exception as e:
-        print(f"Failed to search flights: {e}")
+            print(f"Failed to search flights: {e}")
