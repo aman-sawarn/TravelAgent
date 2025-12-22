@@ -3,7 +3,7 @@ from datetime import datetime
 from ollama import chat
 from pydantic import ValidationError
 
-from utils.schemas import FlightSearchDetails, CheapestFlightSearchDetails, FetchIntent
+from utils.schemas import FlightSearchQueryDetails, CheapestFlightSearchDetails, FetchIntent
 from config.main_config import model_name
 
 
@@ -44,7 +44,7 @@ def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -
 	return details
 
 
-def fetch_standard_flight_details(user_prompt: str, current_model: str = model_name) -> FlightSearchDetails:
+def fetch_standard_flight_details(user_prompt: str, current_model: str = model_name) -> FlightSearchQueryDetails:
 	"""Extract the details from the prompt required to search a Flight (Standard/Direct)"""
 	now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -81,9 +81,9 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 	except json.JSONDecodeError as e:
 		raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
 	try:
-		details = FlightSearchDetails(**parsed)
+		details = FlightSearchQueryDetails(**parsed)
 	except ValidationError as e:
-		print(FlightSearchDetails)
+		print(FlightSearchQueryDetails)
 		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
 	return details
 
