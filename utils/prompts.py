@@ -98,7 +98,7 @@ def fetch_cheapest_flight_details(user_prompt: str, current_model: str = model_n
 
 	Extract the following details from the prompt:
 	1. "origin": IATA code for Origin city or Airport (e.g. LON for London, NYC for New York, DEL for Delhi).
-	2. "destination": IATA code for Destination city or Airport (e.g. LON for London, NYC for New York, DEL for Delhi).
+	2. "destination": IATA code for Destination city or Airport (Optional). If checks for "anywhere" or "cheapest flights from [Origin]", leave this null.
 	3. "departure_date": Departure date in YYYY-MM-DD format (Optional). Can also be a date range like "YYYY-MM-DD,YYYY-MM-DD".
 	4. "nonStop": Whether to search for non-stop flights only (default is False).
 	5. "maxPrice": Maximum price for the flight search (if mentioned). Return value as an Int.
