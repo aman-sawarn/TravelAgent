@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools import tool
 # LangGraph / LangChain core imports
 from langgraph.graph import StateGraph, START, END
-
+from config.main_config import model_name
 load_dotenv()
 
 # --------------------
@@ -32,35 +32,27 @@ class TravelState(TypedDict):
 # Utility / mock tools
 # --------------------
 @tool
-def flight_search(origin: str, dest: str, depart_date: str, return_date: Optional[str] = None, passengers: int = 1):
+def flight_search(details: [FetchedFlightSearchDetails, CheapestFlightSearchDetails]):
     """
     Search for flights using Amadeus API via the Search service.
     Returns a list of flight offers or an error message.
     """
-    try:
-        # Construct the search details object
-        # Note: Mapping tool args to the schema.
-        details = FetchedFlightSearchDetails(
-            origin_iata=origin,
-            destination_iata=dest,
-            departure_date=depart_date,
-            return_date=return_date,
-            adults=passengers,
-            # Default values for fields not exposed to the tool yet
-            children=0,
-            infants=0,
-            currency="INR",
-            travel_class="ECONOMY",
-            non_stop=False,
-            max_results=5
-        )
-        
-        search_service = Search()
-        # Execute async search synchronously
-        results = asyncio.run(search_service.search_flights_on_a_date(details))
-        return results
-    except Exception as e:
-        return {"error": f"Flight search failed: {str(e)}"}
+    if isinstance(details, FetchedFlightSearchDetails):
+        try:
+            search_service = Search()
+            # Execute async search synchronously
+            results = asyncio.run(search_service.search_flights_on_a_date(details))
+            return results
+        except Exception as e:
+            return {"error": f"Flight search failed: {str(e)}"}
+    elif isinstance(details, CheapestFlightSearchDetails):
+        try:
+            search_service = Search()
+            # Execute async search synchronously
+            results = asyncio.run(search_service.search_cheapest_flights_date_range(details))
+            return results
+        except Exception as e:
+            return {"error": f"Cheapest Flight search failed: {str(e)}"}
 
 
 @tool
@@ -85,12 +77,22 @@ if "OPENAI_API_KEY" not in os.environ:
 #         "openai:gpt-3.5-turbo", # or another OpenAI model string supported by your langchain-openai version
 #         temperature=0.2,
 #         )
+
+# llm = ChatHuggingFace(
+#     model_name="mosaicml/mpt-7b-instruct",  # HuggingFace model
+#     model_kwargs={
+#         "temperature": 0.2,
+#         "max_new_tokens": 512,
+#     })
+
 llm = ChatHuggingFace(
-    model_name="mosaicml/mpt-7b-instruct",  # HuggingFace model
+    model_name=model_name,  # HuggingFace model
     model_kwargs={
         "temperature": 0.2,
         "max_new_tokens": 512,
     })
+
+
 # system prompt to instruct the model how to respond and when to call tools
 SYSTEM_PROMPT = SystemMessage(content=(
     """You are TravelAgentGPT. When a user asks for travel help you may either:
@@ -99,66 +101,6 @@ SYSTEM_PROMPT = SystemMessage(content=(
     If you return a tool call, DO NOT provide the final user-facing answer yet — the graph will run the tool and then ask you again to finalize the response using the tool's results.""")
     )
 
-
-# --------------------
-# Node definitions
-# --------------------
-
-# def llm_node(state: TravelState) -> TravelState:
-#     """LLM node: decides whether to answer or call a tool.
-#     Expects state['user_query'] to contain the user's question and may use state['results'] if present.
-#     Returns updated state with either action='none' and response filled, or action set to tool name.
-#     """
-#     messages = [SYSTEM_PROMPT]
-
-
-#     # if we have tool results, include them as context to the LLM
-#     if state.get("results"):
-#         messages.append(HumanMessage(content=f"Tool results: {state['results']}"))
-
-
-#     messages.append(HumanMessage(content=state["user_query"]))
-
-
-#     # call the model
-#     llm_response = llm.invoke({"messages": messages})
-
-
-#     # Extract the assistant content. The exact structure returned by llm.invoke depends on your langchain/langgraph versions.
-#     # We'll try to find textual content in the returned structure.
-#     assistant_messages = llm_response.get("messages") or llm_response.get("output") or []
-#     text = None
-#     if assistant_messages:
-#         # assistant_messages is typically a list of message objects; take the last
-#         last = assistant_messages[-1]
-#     text = getattr(last, "content", None) or last.get("content") if isinstance(last, dict) else str(last)
-
-
-#     if text is None:
-#         state["response"] = "(model returned no text)"
-#         state["action"] = "none"
-#         return state
-
-
-#     # Simple heuristic: if model starts with a JSON-looking tool call, parse it.
-#     text_strip = text.strip()
-#     if text_strip.startswith("{") and "action" in text_strip:
-#         try:
-#             import json
-#             j = json.loads(text_strip)
-#             state["action"] = j.get("action")
-#             state["action_input"] = j.get("action_input")
-#             state["response"] = None
-#             return state
-#         except Exception:
-#         # fallthrough to answer directly
-#             pass
-
-
-#     # otherwise treat as direct answer
-#     state["response"] = text
-#     state["action"] = "none"
-#     return state
 
 def llm_node(state: TravelState) -> TravelState:
     messages = [SYSTEM_PROMPT]
@@ -205,21 +147,6 @@ def flight_tool_node(state: TravelState) -> TravelState:
     state["action"] = "none"
     return state
 
-
-
-
-def hotel_tool_node(state: TravelState) -> TravelState:
-    ai = state.get("action_input") or {}
-    city = ai.get("city")
-    checkin = ai.get("checkin")
-    checkout = ai.get("checkout")
-    guests = ai.get("guests", 1)
-
-
-    results = hotel_search(city, checkin, checkout, guests)
-    state["results"] = results
-    state["action"] = "none"
-    return state
 
 
 # --------------------

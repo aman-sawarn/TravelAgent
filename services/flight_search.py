@@ -6,6 +6,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from langchain_core.tools import tool
+
 # Explicitly load .env from the project root (parent of services/)
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
 load_dotenv(dotenv_path)
@@ -14,8 +15,11 @@ load_dotenv(dotenv_path)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.schemas import FlightSearchDetails, CheapestFlightSearchDetails
 
-@tool
+
+# @tool
 class Search:
+    """Flight Search Tool"""
+
     def __init__(self) -> None:
         self.AMADEUS_BASE = os.getenv("AMADEUS_BASE", "https://test.api.amadeus.com")
         self.AMADEUS_KEY = os.getenv("AMADEUS_KEY", "YOUR_AMADEUS_KEY")
@@ -55,11 +59,11 @@ class Search:
     async def search_flights_on_a_date(self, flight_search_data_object: FlightSearchDetails) -> dict:
         """Search for flights based on the provided search criteria.
 
-        Args:
-            flight_search_data_object (FlightSearchDetails): The search criteria.
-        Returns:
-            dict: The search results.
-        """
+		Args:
+			flight_search_data_object (FlightSearchDetails): The search criteria.
+		Returns:
+			dict: The search results.
+		"""
         token = await self.get_amadeus_token()
 
         url = f"{self.AMADEUS_BASE}/v2/shopping/flight-offers"
@@ -97,23 +101,23 @@ class Search:
 
     async def search_cheapest_flights_date_range(self, flight_search_data_object: CheapestFlightSearchDetails) -> dict:
         """
-        Search for cheapest flight dates.
-        Endpoint: /v1/shopping/flight-dates
-        """
+		Search for cheapest flight dates.
+		Endpoint: /v1/shopping/flight-dates
+		"""
         token = await self.get_amadeus_token()
 
-        url = f"{self.AMADEUS_BASE}/v1/shopping/flight-dates"
+        url = f"{self.AMADEUS_BASE}/shopping/flight-dates"
         params = {
             "origin": flight_search_data_object.origin,
             "destination": flight_search_data_object.destination,
             "oneWay": flight_search_data_object.oneWay,
         }
-        
+
         if flight_search_data_object.return_date:
             params["oneWay"] = False
             params["returnDate"] = flight_search_data_object.return_date
         else:
-             params["oneWay"] = True
+            params["oneWay"] = True
 
         if flight_search_data_object.departure_date:
             params["departureDate"] = flight_search_data_object.departure_date
@@ -131,20 +135,22 @@ class Search:
 
 if __name__ == "__main__":
     search = Search()
-    flight_search_data = FlightSearchDetails(
-        origin_iata="MAD",
-        destination_iata="LON",
-        departure_date="2026-05-12")
-    
+    # flight_search_data = FlightSearchDetails(
+    #     origin_iata="MAD",
+    #     destination_iata="LON",
+    #     departure_date="2026-03-12")
+
     flight_search_cheapest_data = CheapestFlightSearchDetails(
-            origin="BOM",
-            destination="DEL",
-            departure_date="2026-05-12")
+        origin="BOM",
+        destination="DEL")
     try:
         print("Starting flight search...")
+        # print("Flight Search Data:", flight_search_data)
+        print("*=" * 20)
         # results = asyncio.run(search.search_flights_on_a_date(flight_search_data))
+        print("flight_search_cheapest_data : ",flight_search_cheapest_data)
         results = asyncio.run(search.search_cheapest_flights_date_range(flight_search_cheapest_data))
         print(results)
         print("Search successful!")
     except Exception as e:
-            print(f"Failed to search flights: {e}")
+        print(f"Failed to search flights: {e}")
