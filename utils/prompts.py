@@ -77,7 +77,7 @@ def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -
     - "intent": One of "find_flights_advanced", "find_flights_standard", "other".
     - "date_range": Boolean. True if the user implies flexible dates, a date range (e.g. "next week", "in December").
     - "date_range_details": Object with "start_date" (YYYY-MM-DD), "end_date" (YYYY-MM-DD), "is_range" (bool). Only populate if date_range is True.
-    - "multicity_trip": Boolean. True if user has given a multicity trip (e.g. X->Y->Z->X).
+    - "multicity_trip": Boolean. True if user has given a multicity trip eg. "from Delhi to Bombay to Kolkata and back to Delhi", "Delhi, Bombay and Kolkata coming back to Delhi", "Delhi, Bombay and Kolkata coming back to Bombay", False otherwise.
     - "sorting_details": String. One of "price", "duration", "generated_departure_time", "generated_arrival_time", "number_of_bookable_seats", "last_ticketing_date". Only populate if user has given a sorting preference.
     """
 	response = chat(

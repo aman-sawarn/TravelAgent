@@ -29,7 +29,7 @@ class FetchIntent(BaseModel):
 	intent: UserIntent = Field(..., description="User's intent string")
 	date_range: Optional[bool] = Field(None, description="True if user has given a date range eg. next week, next month, this weekend, this month, this year, etc. False otherwise")
 	date_range_details: Optional[DateRangeDetails] = Field(None, description="Date range details if date_range is True")
-	multicity_trip: Optional[bool] = Field(None, description="True if user has given a multicity trip eg. from X to Y to Z and back to X, X, Y and Z coming back to X, False otherwise")
+	multicity_trip: Optional[bool] = Field(None, description="True if user has given a multicity trip eg. from X to Y to Z and back to X. eg. X, Y and Z coming back to X, False otherwise")
 	sorting_details: Optional[SortBy] = Field(None, description="Sorting details if user has given a sorting preference")
 	def __str__(self):
 		return f"intent={self.intent} date_range={self.date_range} date_range_details={self.date_range_details} multicity_trip={self.multicity_trip} sorting_details={self.sorting_details}"
