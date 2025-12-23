@@ -9,26 +9,49 @@ The Travel Agent is designed to assist users in finding flight and hotel options
 ## PEAS Diagram
 
 ```mermaid
-mindmap
-  root((Travel Agent))
-    Performance Measures
-      Accuracy of Search Results
-      Cost Optimization (Finding cheapest)
-      Time Efficiency (Fastest flights)
-      User Satisfaction
-      Error Handling Reliability
-    Environment
-      User
-      Amadeus Travel API
-      Self-hosted Python Runtime
-    Actuators
-      API Requests (Flight/Hotel Search)
-      Data Processing (Filtering/Sorting)
-      Response Generation (Text Output)
-    Sensors
-      User Input (Natural Language Prompt)
-      API Responses (JSON Data)
-      System Clock (Time/Date validation)
+graph TD
+    classDef main fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef perf fill:#d4edda,stroke:#155724,stroke-width:1px,color:#155724;
+    classDef env fill:#cce5ff,stroke:#004085,stroke-width:1px,color:#004085;
+    classDef act fill:#fff3cd,stroke:#856404,stroke-width:1px,color:#856404;
+    classDef sens fill:#f8d7da,stroke:#721c24,stroke-width:1px,color:#721c24;
+
+    TA((Travel Agent)):::main
+
+    subgraph Performance [Performance Measures]
+        direction TB
+        P1(Accuracy of Search):::perf
+        P2(Cost Optimization):::perf
+        P3(Time Efficiency):::perf
+        P4(User Satisfaction):::perf
+        P5(Error Reliability):::perf
+    end
+
+    subgraph Environment [Environment]
+        direction TB
+        E1(User):::env
+        E2(Amadeus API):::env
+        E3(Python Runtime):::env
+    end
+    
+    subgraph Actuators [Actuators]
+        direction TB
+        A1(API Requests):::act
+        A2(Data Filtering/Sorting):::act
+        A3(Response Gen):::act
+    end
+
+    subgraph Sensors [Sensors]
+        direction TB
+        S1(User Input):::sens
+        S2(API Responses):::sens
+        S3(System Clock):::sens
+    end
+
+    TA --> Performance
+    TA --> Environment
+    TA --> Actuators
+    TA --> Sensors
 ```
 
 ## Detailed Breakdown
