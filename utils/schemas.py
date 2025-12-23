@@ -63,6 +63,6 @@ class HotelSearchQueryDetails(BaseModel):
     ratings: Optional[List[int]] = Field(None, description="List of ratings for the hotel search")
     amenities: Optional[List[str]] = Field(None, description="List of amenities to filter hotels. Available values: SWIMMING_POOL, SPA, FITNESS_CENTER, AIR_CONDITIONING, RESTAURANT, PARKING, PETS_ALLOWED, AIRPORT_SHUTTLE, BUSINESS_CENTER, DISABLED_FACILITIES, WIFI, MEETING_ROOMS, NO_KID_ALLOWED, TENNIS, GOLF, KITCHEN, ANIMAL_WATCHING, BABY-SITTING, BEACH, CASINO, JACUZZI, SAUNA, SOLARIUM, MASSAGE, VALET_PARKING, BAR or LOUNGE, KIDS_WELCOME, NO_PORN_FILMS, MINIBAR, TELEVISION, WI-FI_IN_ROOM, ROOM_SERVICE, GUARDED_PARKG, SERV_SPEC_MENU")
     max_results: Optional[int] = Field(10, description="Maximum number of hotel options to return", ge=1)
-    min_stars: Optional[int] = Field(None, description="Minimum number of stars for the hotel search", ge=1, le=5)
+    min_stars: Optional[List[int]] = Field(None, description="Hotel stars. Up to four values can be requested at the same time in a comma separated list. Available values: 1, 2, 3, 4, 5")
     max_price: Optional[int] = Field(None, description="Maximum price for the hotel search", ge=0.0)
     
