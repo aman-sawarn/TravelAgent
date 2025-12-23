@@ -8,16 +8,21 @@ class UserIntent(str, Enum):
 	FIND_FLIGHTS_STANDARD = "find_flights_standard"
 	OTHER = "other"
 
-class FetchIntent(BaseModel):
-	"""Model to fetch intent for a given user"""
-	intent: UserIntent = Field(..., description="User's intent string")
-	date_range: Optional[bool] = Field(False, description="User's Date Range")
 
 class DateRangeDetails(BaseModel):
     """Model to extract date range details from user prompt"""
     start_date: Optional[str] = Field(None, description="Start date in YYYY-MM-DD format")
     end_date: Optional[str] = Field(None, description="End date in YYYY-MM-DD format")
     is_range: bool = Field(False, description="Whether the user specified a date range")
+
+class FetchIntent(BaseModel):
+	"""Model to fetch intent for a given user"""
+	intent: UserIntent = Field(..., description="User's intent string")
+	date_range: Optional[bool] = Field(None, description="True if user has given a date range eg. next week, next month, this weekend, this month, this year, etc. False otherwise")
+	date_range_details: Optional[DateRangeDetails] = Field(None, description="Date range details if date_range is True")
+	multicity_trip: Optional[bool] = Field(None, description="True if user has given a multicity trip eg. from X to Y to Z and back to X, X, Y and Z coming back to X, False otherwise")
+	def __str__(self):
+		return f"intent={self.intent} date_range={self.date_range} date_range_details={self.date_range_details} multicity_trip={self.multicity_trip}"
 
 
 class SortBy(str, Enum):

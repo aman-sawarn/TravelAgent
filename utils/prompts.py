@@ -55,9 +55,11 @@ def fetch_date_range_from_query(prompt: str, model_to_be_used: str = model_name)
 
 def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -> FetchIntent:
 	"""Extract the details from the prompt fetch the Intent of the user query"""
+	now = datetime.now().strftime("%Y-%m-%d")
 
 	extraction_prompt = f"""
     You are a helpful Travel Agent that identifies the user intent from user prompts.
+    Current date: {now}
 
     Extract the Intent from the prompt:
     
@@ -71,9 +73,11 @@ def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -
 
     Prompt: "{prompt}"
 
-    Provide the details strictly in JSON format with keys:
+    Provide the details strictly in JSON format with keys matching the Pydantic schema:
     - "intent": One of "find_flights_advanced", "find_flights_standard", "other".
-    - "date_range": Boolean. Set to true if the user implies flexible dates, a date range (e.g. "next week", "in December"), or finding the cheapest date. Set to false for specific single dates.
+    - "date_range": Boolean. True if the user implies flexible dates, a date range (e.g. "next week", "in December").
+    - "date_range_details": Object with "start_date" (YYYY-MM-DD), "end_date" (YYYY-MM-DD), "is_range" (bool). Only populate if date_range is True.
+    - "multicity_trip": Boolean. True if user has given a multicity trip (e.g. X->Y->Z->X).
     """
 	response = chat(
 		model=model_to_be_used,
@@ -86,7 +90,6 @@ def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -
 		details = FetchIntent(**parsed)
 	except (json.JSONDecodeError, ValidationError) as e:
 		# Fallback to standard if ambiguous or error, or raise
-		# For robustness, let's default to standard if parsing fails but logged
 		print(f"Intent Parsing Error: {e}")
 		details = FetchIntent(intent="find_flights_standard")
 
@@ -147,6 +150,6 @@ if __name__ == "__main__":
 	intent_result = fetch_intent_of_the_query(user_prompt)
 	print(f"Intent Result:\n{intent_result}\n")
 
-	# 2. Fetch Date Range
-	date_range_result = fetch_date_range_from_query(user_prompt)
-	print(f"Date Range Result:\n{date_range_result}")
+	# # 2. Fetch Date Range
+	# date_range_result = fetch_date_range_from_query(user_prompt)
+	# print(f"Date Range Result:\n{date_range_result}")
