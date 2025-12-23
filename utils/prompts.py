@@ -5,11 +5,27 @@ from pydantic import ValidationError
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.schemas import FlightSearchQueryDetails, FetchIntent
+from utils.schemas import FlightSearchQueryDetails, FetchIntent, DateRangeDetails
 from config.main_config import model_name
 
-def fetch_date_range_from_query(prompt: str, model_to_be_used: str = model_name) -> dict:
-	"""Extract specific date or date range details from the user query."""
+def fetch_date_range_from_query(prompt: str, model_to_be_used: str = model_name) -> DateRangeDetails:
+	"""
+    Extract specific date or date range details from the user query.
+    
+    This function uses an LLM to identify and extract date information from a natural language prompt.
+    It handles both single dates and date ranges, converting relative terms (e.g., "next week") 
+    into absolute ISO 8601 (YYYY-MM-DD) format.
+    
+    Args:
+        prompt (str): The user's natural language query.
+        model_to_be_used (str): The LLM model identifier to use (default from config).
+        
+    Returns:
+        DateRangeDetails: A Pydantic object containing:
+            - start_date (Optional[str]): The starting date of the range or the single date found.
+            - end_date (Optional[str]): The ending date of the range (if applicable).
+            - is_range (bool): True if a range was detected, False otherwise.
+    """
 	now = datetime.now().strftime("%Y-%m-%d")
 	extraction_prompt = f"""
     Current date: {now}
@@ -31,9 +47,10 @@ def fetch_date_range_from_query(prompt: str, model_to_be_used: str = model_name)
 	)
 	try:
 		details_json = response['message']['content'].strip().strip("```").replace("json", "").strip()
-		return json.loads(details_json)
+		parsed = json.loads(details_json)
+		return DateRangeDetails(**parsed)
 	except (json.JSONDecodeError, Exception):
-		return {"start_date": None, "end_date": None, "is_range": False}
+		return DateRangeDetails(start_date=None, end_date=None, is_range=False)
 
 
 def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -> FetchIntent:
@@ -122,7 +139,14 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 
 if __name__ == "__main__":
 	# Example usage
-	user_prompt = "Find flights from LON to JFK next month"
-	# flight_details = fetch_standard_flight_details(user_prompt)
-	result = fetch_date_range_from_query(user_prompt)
-	print(result)
+	user_prompt = "plan a trip from LON to JFK next month"
+	
+	print(f"Prompt: {user_prompt}\n")
+
+	# 1. Fetch Intent
+	intent_result = fetch_intent_of_the_query(user_prompt)
+	print(f"Intent Result:\n{intent_result}\n")
+
+	# 2. Fetch Date Range
+	date_range_result = fetch_date_range_from_query(user_prompt)
+	print(f"Date Range Result:\n{date_range_result}")

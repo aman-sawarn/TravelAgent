@@ -13,6 +13,12 @@ class FetchIntent(BaseModel):
 	intent: UserIntent = Field(..., description="User's intent string")
 	date_range: Optional[bool] = Field(False, description="User's Date Range")
 
+class DateRangeDetails(BaseModel):
+    """Model to extract date range details from user prompt"""
+    start_date: Optional[str] = Field(None, description="Start date in YYYY-MM-DD format")
+    end_date: Optional[str] = Field(None, description="End date in YYYY-MM-DD format")
+    is_range: bool = Field(False, description="Whether the user specified a date range")
+
 
 class SortBy(str, Enum):
 	PRICE = "price"
