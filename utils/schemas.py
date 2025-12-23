@@ -37,14 +37,3 @@ class FlightSearchQueryDetails(BaseModel):
 	excluded_airlines: Optional[List[str]] = Field(None, description="List of IATA codes of airlines to exclude")
 	min_bookable_seats: Optional[int] = Field(None, description="Minimum number of bookable seats required")
 	instant_ticketing_required: Optional[bool] = Field(False, description="Whether to filter for flights that require instant ticketing")
-
-class CheapestFlightSearchDetails(BaseModel):
-	"""Model to fetch flight search details for finding the cheapest flight dates"""
-	origin: str = Field(..., description="Origin city or Airport in the Journey", max_length=150)
-	destination: str = Field(..., description="Destination city or Airport in the Journey. If not provided, searches for cheapest destinations anywhere.", max_length=150)
-	departure_date: Optional[str] = Field(None, description="the date, or range of dates, on which the flight will depart from the origin. Dates are specified in the ISO 8601 YYYY-MM-DD format, e.g. 2017-12-25. Ranges are specified with a comma and are inclusive", max_length=21)
-	return_date: Optional[str] = Field(None, description="the date, or range of dates, on which the flight will depart from the origin. Dates are specified in the ISO 8601 YYYY-MM-DD format, e.g. 2017-12-25. Ranges are specified with a comma and are inclusive", max_length=21)
-	nonStop: Optional[bool] = Field(False, description="Whether to search for non-stop flights only")
-	maxPrice: Optional[int] = Field(None, description="Maximum price for the flight search", ge=0.0)
-	oneWay: Optional[bool] = Field(True, description="Whether to search for one-way flights only")
-	
