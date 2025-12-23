@@ -110,8 +110,6 @@ class Search:
         if flight_search_query_object.non_stop:
             params["nonStop"] = "true"
 
-        print(f"DEBUG: Requesting {url} with params: {params}")
-
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
 
@@ -267,8 +265,6 @@ class Search:
         # 1. Map Inputs to Params
         params = self._map_search_params(flight_search_data_object, max_results)
 
-        print(f"DEBUG: Requesting {url} with params: {params}")
-
         # Execute Request
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
@@ -314,13 +310,10 @@ class Search:
         if hotel_search_data.ratings:
             params["ratings"] = ",".join(map(str, hotel_search_data.ratings))
         
-        print(f"DEBUG: Requesting {url} with params: {params}")
-
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
         
         if r.status_code != 200:
-            print(f"DEBUG: API Error {r.status_code}: {r.text}")
             raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
             
         data = r.json()
