@@ -301,20 +301,15 @@ class Search:
         token = await self.get_amadeus_token()
         url = f"{self.AMADEUS_BASE}/v1/reference-data/locations/hotels/by-city"
         
+        # Build params dict with only supported parameters for Hotel List API
         params = {
             "cityCode": hotel_search_data.city_code,
             "radius": hotel_search_data.radius,
             "radiusUnit": hotel_search_data.radius_unit,
-            "currency": hotel_search_data.currency,
-            "max": hotel_search_data.max_results,
-            "minStars": hotel_search_data.min_stars,
-            "maxPrice": hotel_search_data.max_price,
-            "sort": hotel_search_data.sort_by.value,
+            "ratings": hotel_search_data.min_stars,
         }
         
-        if hotel_search_data.ratings:
-            params["ratings"] = ",".join(map(str, hotel_search_data.ratings))
-        
+        # Add optional parameters only if they have values
         if hotel_search_data.amenities:
             params["amenities"] = ",".join(hotel_search_data.amenities)
         

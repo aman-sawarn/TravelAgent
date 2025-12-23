@@ -65,6 +65,4 @@ class HotelSearchQueryDetails(BaseModel):
     max_results: Optional[int] = Field(10, description="Maximum number of hotel options to return", ge=1)
     min_stars: Optional[int] = Field(None, description="Minimum number of stars for the hotel search", ge=1, le=5)
     max_price: Optional[int] = Field(None, description="Maximum price for the hotel search", ge=0.0)
-    sort_by: Optional[SortBy] = Field(SortBy.PRICE, description="Criteria to sort the results by")
-    currency: Optional[str] = Field("INR", description="Currency code for the hotel search", max_length=3)
-	
+    
