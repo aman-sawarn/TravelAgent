@@ -28,7 +28,10 @@ from utils.schemas import FlightSearchQueryDetails, SortBy
 
 # @tool
 class Search:
-    """Flight Search Tool"""
+    """Flight Search Tool
+    API Reference for Flight Search: https://developer.amadeus.com/docs/flight-search/api-reference
+    API Reference for Hotel Search: https://developers.amadeus.com/self-service/category/hotels/api-doc/hotel-list/api-reference
+    """
 
     def __init__(self) -> None:
         self.AMADEUS_BASE = os.getenv("AMADEUS_BASE", "https://test.api.amadeus.com")
