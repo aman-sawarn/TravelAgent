@@ -304,11 +304,19 @@ class Search:
         params = {
             "cityCode": hotel_search_data.city_code,
             "radius": hotel_search_data.radius,
-            "radiusUnit": hotel_search_data.radius_unit
+            "radiusUnit": hotel_search_data.radius_unit,
+            "currency": hotel_search_data.currency,
+            "max": hotel_search_data.max_results,
+            "minStars": hotel_search_data.min_stars,
+            "maxPrice": hotel_search_data.max_price,
+            "sort": hotel_search_data.sort_by.value,
         }
         
         if hotel_search_data.ratings:
             params["ratings"] = ",".join(map(str, hotel_search_data.ratings))
+        
+        if hotel_search_data.amenities:
+            params["amenities"] = ",".join(hotel_search_data.amenities)
         
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)

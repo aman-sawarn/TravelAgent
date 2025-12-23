@@ -141,6 +141,45 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 		raise ValueError(f"LLM Error:\n{details_json}\n{e}")
 	return details
 
+def fetch_hotel_details(user_prompt: str, current_model: str = model_name) -> HotelSearchQueryDetails:
+	"""Extract details for Hotel Search"""
+	now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+	extraction_prompt = f"""
+	You are a helpful Travel Agent that extracts hotel search details.
+	Current time: {now}
+
+	Extract the following HotelSearchQueryDetails from the prompt:
+	1. "city_code": City code (e.g. DEL, LON).
+	2. "check_in_date": YYYY-MM-DD. Convert relative dates (tomorrow, next Fri) to absolute.
+	3. "check_out_date": YYYY-MM-DD (Optional).
+	4. "adults": Int (Default 1).
+	5. "children": Int (Default 0).
+	6. "infants": Int (Default 0).
+	7. "currency": Default "INR".
+	8. "max_results": Int (Default 10).
+	9. "sort_by": Options: "price", "duration", "generated_departure_time", "generated_arrival_time", "number_of_bookable_seats", "last_ticketing_date". 
+	    - Default to "price" if "cheapest" is asked.
+	    - Default to "duration" if "fastest/shortest" is asked.
+	10. "max_stops": Int (0, 1, 2). If "direct" or "non-stop" is requested, set max_stops=0.
+	11. "min_bookable_seats": Int (Optional).
+	12. "instant_ticketing_required": Boolean (Optional).
+
+	Prompt: "{user_prompt}"
+
+	Provide details strictly in JSON.
+	"""
+	response = chat(model=current_model, messages=[{'role': 'user', 'content': extraction_prompt}])
+	details_json = response['message']['content']
+
+	try:
+		details_json = details_json.strip().strip("```").replace("json", "").strip()
+		parsed = json.loads(details_json)
+		details = HotelSearchQueryDetails(**parsed)
+	except (json.JSONDecodeError, ValidationError) as e:
+		raise ValueError(f"LLM Error:\n{details_json}\n{e}")
+	return details	
+
 if __name__ == "__main__":
 	# Example usage
 	user_prompt = "plan a trip from BLR to BOM next month"
