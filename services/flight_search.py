@@ -14,10 +14,7 @@ except ImportError:
             self.status_code = status_code
             self.detail = detail
             super().__init__(f"{status_code}: {detail}")
-try:
-    from langchain_core.tools import tool
-except ImportError:
-    def tool(x): return x
+# from langchain_core.tools import tool
 
 # Explicitly load .env from the project root (parent of services/)
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
@@ -77,8 +74,16 @@ class Search:
 
     async def search_flights_on_a_date(self, flight_search_query_object: FlightSearchQueryDetails) -> dict:
         """
-        Search for flights using standard criteria.
-        This provides a direct search without extensive client-side post-processing.
+        Search for flights matching specific criteria on a given date.
+        
+        This method performs a standard flight search using the Amadeus Flight Offers Search API.
+        It supports filtering by origin, destination, date, passengers, class, etc.
+        
+        Args:
+            flight_search_query_object (FlightSearchQueryDetails): Object containing search parameters.
+            
+        Returns:
+            dict: Raw dictionary response from the Amadeus API containing flight offers.
         """
         token = await self.get_amadeus_token()
         url = f"{self.AMADEUS_BASE}/v2/shopping/flight-offers"
@@ -111,9 +116,21 @@ class Search:
 
     async def search_flights_advanced(self, flight_search_data_object) -> dict:
         """
-        Advanced Search for flights (Renamed from search_cheapest_flights_date_range).
-        Performs search and applies client-side filtering and sorting (e.g. max stops, duration, time).
-        Supports both FlightSearchQueryDetails and CheapestFlightSearchDetails (mapping inputs).
+        Perform an advanced flight search with client-side filtering and sorting.
+        
+        This method extends the standard search by applying additional filters (e.g., max stops, 
+        min bookable seats, instant ticketing) and custom sorting logic (e.g., by duration, 
+        schedule, seat availability) that may not be fully supported by the underlying API.
+        
+        It accepts either `FlightSearchQueryDetails` for specific flight searches or 
+        `CheapestFlightSearchDetails` for date-flexible searches, adapting the parameters accordingly.
+        
+        Args:
+            flight_search_data_object (Union[FlightSearchQueryDetails, CheapestFlightSearchDetails]): 
+                The search criteria object.
+        
+        Returns:
+            dict: A dictionary containing the 'source' of data and the 'results' (flight sorted/filtered offers).
         """
         token = await self.get_amadeus_token()
         url = f"{self.AMADEUS_BASE}/v2/shopping/flight-offers"

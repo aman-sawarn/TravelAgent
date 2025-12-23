@@ -91,7 +91,21 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 
 
 def fetch_cheapest_flight_details(user_prompt: str, current_model: str = model_name) -> CheapestFlightSearchDetails:
-	"""Extract details for Cheapest Date Search (Flexible Dates)"""
+	"""
+	Extract structured details from a user prompt for finding the cheapest flight dates.
+
+	This function uses an LLM to parse natural language requests specifically focused on 
+	finding the most affordable travel dates (e.g., "cheapest time to fly to London").
+	It extracts parameters like origin, destination, date ranges, and boolean flags 
+	(non-stop, one-way) into a `CheapestFlightSearchDetails` object.
+
+	Args:
+		user_prompt (str): The natural language query from the user.
+		current_model (str): The specific LLM model to use for extraction (defaults to config).
+
+	Returns:
+		CheapestFlightSearchDetails: A validated Pydantic object containing the search parameters.
+	"""
 	now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 	extraction_prompt = f"""
