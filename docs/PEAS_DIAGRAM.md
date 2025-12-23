@@ -68,6 +68,7 @@ The context in which the agent operates:
 ### 3. Actuators
 The mechanisms the agent uses to act upon the environment:
 - **Search Queries**: Constructing and sending HTTP requests to Amadeus endpoints (`/v2/shopping/flight-offers`, `/v1/reference-data/locations/hotels/by-city`).
+ Note: AMADEUS API is the environment, but succinctly, the actuators are the endpoints to call.
 - **Data Processor**: Client-side logic to filter (e.g., by seats, stops) and sort (e.g., by price, duration) raw API data.
 - **Output Interface**: Formatting the structured data into human-readable text or JSON for the user.
 
