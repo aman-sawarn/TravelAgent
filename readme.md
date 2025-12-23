@@ -63,12 +63,15 @@ Expand beyond flights to complete the travel experience.
 
 *   **Multi-City / Round-the-World Agent**: Handle complex routing like "London -> Tokyo -> Sydney -> LA -> London".
     *   *Foundation Laid*: `72eaf90` added `multicity_trip` to intent schema.
-*   **Round-the-World Agent**: Handle complex routing like "London -> Tokyo -> Sydney -> LA -> London".
-    *   *Foundation Laid*: `72eaf90` added `round_the_world_trip` to intent schema.
+*   **Multi-City Trip Agent**: Handle complex routing like "London -> Tokyo -> Sydney -> LA -> London".
+    *   *Foundation Laid*: `72eaf90` added `multicity_trip` to intent schema.
+*   **Multi-City Round-the-World Trip Agent**: Handle complex routing like "London -> Tokyo -> Sydney -> LA -> London".
+    *   *Foundation Laid*: `72eaf90` added `multicity_trip` to intent schema.
+*
 
-### 3. Budget & Deal Hunting Agents
-*   **"Anywhere" / Inspiration Agent**: Suggest destinations based on budget and themes (e.g., "Beach under $1000").
+### 3. Budget & Trip optimization
+*   **"Date Range Optimization Agent**: Suggest destinations based on date range and budget (e.g., "Delhi to New York next month under $1000").
 *   **Price Watch Agent**: Periodically check for price drops on specific routes.
 
-### 5. Orchestrator Workflow (The "Super Agent")
+### 4. Further Development and Planning Pointers -> Orchestrator Workflow (The "Super Agent")
 A central "Triage Agent" to coordinate complex requests (e.g., "Plan a honeymoon") by delegating to specialized Flight, Hotel, and Activity agents.
