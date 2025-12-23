@@ -388,7 +388,6 @@ if __name__ == "__main__":
         city_code="DEL",
         radius=5,
         radius_unit="KM",
-        ratings=[4, 5]
     )
     try:
         results = asyncio.run(search.search_hotels_by_city(hotel_search_data))

@@ -157,13 +157,7 @@ def fetch_hotel_details(user_prompt: str, current_model: str = model_name) -> Ho
 	5. "children": Int (Default 0).
 	6. "infants": Int (Default 0).
 	7. "currency": Default "INR".
-	8. "max_results": Int (Default 10).
-	9. "sort_by": Options: "price", "duration", "generated_departure_time", "generated_arrival_time", "number_of_bookable_seats", "last_ticketing_date". 
-	    - Default to "price" if "cheapest" is asked.
-	    - Default to "duration" if "fastest/shortest" is asked.
-	10. "max_stops": Int (0, 1, 2). If "direct" or "non-stop" is requested, set max_stops=0.
-	11. "min_bookable_seats": Int (Optional).
-	12. "instant_ticketing_required": Boolean (Optional).
+	
 
 	Prompt: "{user_prompt}"
 
