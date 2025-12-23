@@ -50,7 +50,7 @@ The agent has evolved to handle increasingly complex user requests, moving from 
 
 ---
 
-## Future Roadmap & Brainstorming
+## Current Roadmap & Brainstorming
 
 We are actively exploring new agents and workflows to expand the Travel Agent's utility.
 
