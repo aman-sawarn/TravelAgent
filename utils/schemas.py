@@ -3,16 +3,15 @@ from typing import Optional, List
 from enum import Enum
 from pydantic import BaseModel, Field
 
-
 class FetchIntent(BaseModel):
 	"""Model to fetch intent for a given user"""
-	intent: str = Field(..., description="", max_length=150)
-	
+	intent: str = Field(..., description="User's intent string", max_length=150)
+
 
 class SortBy(str, Enum):
 	PRICE = "price"
 	DURATION = "duration"
-	DEPARTURE_TIME = "generated_departure_time" # Note: Amadeus might name this differently or we sort client side
+	DEPARTURE_TIME = "generated_departure_time"
 	ARRIVAL_TIME = "generated_arrival_time"
 	SEATS = "number_of_bookable_seats"
 	LAST_TICKETING_DATE = "last_ticketing_date"

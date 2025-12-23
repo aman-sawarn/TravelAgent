@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 # Add project root to sys.path (parent of services/)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.prompts import fetch_standard_flight_details, fetch_cheapest_flight_details, fetch_intent_of_the_query
+from utils.prompts import fetch_standard_flight_details, fetch_intent_of_the_query
 from services.flight_search import Search
 from config.main_config import model_name
 from utils.output_reader import flight_offer_list_reader

@@ -22,7 +22,7 @@ load_dotenv(dotenv_path)
 
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.schemas import FlightSearchQueryDetails, CheapestFlightSearchDetails, SortBy
+from utils.schemas import FlightSearchQueryDetails, SortBy
 
 
 # @tool
