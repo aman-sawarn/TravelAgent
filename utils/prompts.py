@@ -78,6 +78,7 @@ def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -
     - "date_range": Boolean. True if the user implies flexible dates, a date range (e.g. "next week", "in December").
     - "date_range_details": Object with "start_date" (YYYY-MM-DD), "end_date" (YYYY-MM-DD), "is_range" (bool). Only populate if date_range is True.
     - "multicity_trip": Boolean. True if user has given a multicity trip (e.g. X->Y->Z->X).
+    - "sorting_details": String. One of "price", "duration", "generated_departure_time", "generated_arrival_time", "number_of_bookable_seats", "last_ticketing_date". Only populate if user has given a sorting preference.
     """
 	response = chat(
 		model=model_to_be_used,
@@ -142,7 +143,7 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 
 if __name__ == "__main__":
 	# Example usage
-	user_prompt = "plan a trip from LON to JFK next month"
+	user_prompt = "plan a trip from BLR to BOM next month"
 	
 	print(f"Prompt: {user_prompt}\n")
 
