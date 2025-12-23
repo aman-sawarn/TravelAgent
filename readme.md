@@ -1,10 +1,10 @@
 # Travel Agent
 
-A sophisticated flight search agent that leverages Large Language Models (LLMs) to understand natural language queries, extract user intent, and interact with the Amadeus API to find the best flight options.
+A state-of-the-art Travel Agent designed to revolutionize how users plan their journeys. By integrating advanced Large Language Models (LLMs) with robust flight search APIs (Amadeus), this agent goes beyond simple keyword matching. It comprehends natural language nuances, complex date logic, and specific user preferences to deliver highly relevant travel options. Whether you're looking for the cheapest getaway, a fast business trip, or a multi-leg vacation, this agent interprets your intent with precision.
 
 ## Features & Capabilities
 
-The agent has evolved to handle increasingly complex user requests, moving from simple date parsing to advanced intent understanding.
+From its inception as a basic date parser to its current state as an intelligent travel assistant, the agent's capabilities have expanded significantly. It now supports a wide array of search patterns, ensuring that every user request—no matter how vague or specific—is handled effectively.
 
 ### Version 0: Explicit Date Parsing & Basic Search
 **Expectation**: The agent handles precise, hardcoded dates provided by the user.
