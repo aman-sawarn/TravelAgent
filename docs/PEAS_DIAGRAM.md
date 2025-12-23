@@ -9,49 +9,45 @@ The Travel Agent is designed to assist users in finding flight and hotel options
 ## PEAS Diagram
 
 ```mermaid
-graph TD
-    classDef main fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef perf fill:#d4edda,stroke:#155724,stroke-width:1px,color:#155724;
-    classDef env fill:#cce5ff,stroke:#004085,stroke-width:1px,color:#004085;
-    classDef act fill:#fff3cd,stroke:#856404,stroke-width:1px,color:#856404;
-    classDef sens fill:#f8d7da,stroke:#721c24,stroke-width:1px,color:#721c24;
-
-    TA((Travel Agent)):::main
-
-    subgraph Performance [Performance Measures]
-        direction TB
-        P1(Accuracy of Search):::perf
-        P2(Cost Optimization):::perf
-        P3(Time Efficiency):::perf
-        P4(User Satisfaction):::perf
-        P5(Error Reliability):::perf
-    end
-
-    subgraph Environment [Environment]
-        direction TB
-        E1(User):::env
-        E2(Amadeus API):::env
-        E3(Python Runtime):::env
-    end
+graph LR
+    %% Star Format / Radial Tree
     
-    subgraph Actuators [Actuators]
-        direction TB
-        A1(API Requests):::act
-        A2(Data Filtering/Sorting):::act
-        A3(Response Gen):::act
-    end
+    %% Styles
+    classDef hub fill:#2d3436,stroke:#000,stroke-width:4px,color:#fff,font-size:16px;
+    classDef perf fill:#00b894,stroke:#000,stroke-width:1px,color:#fff;
+    classDef env fill:#0984e3,stroke:#000,stroke-width:1px,color:#fff;
+    classDef act fill:#fdcb6e,stroke:#000,stroke-width:1px,color:#000;
+    classDef sens fill:#d63031,stroke:#000,stroke-width:1px,color:#fff;
+    classDef item fill:#fff,stroke:#b2bec3,stroke-width:1px,color:#2d3436,font-size:12px;
 
-    subgraph Sensors [Sensors]
-        direction TB
-        S1(User Input):::sens
-        S2(API Responses):::sens
-        S3(System Clock):::sens
-    end
+    %% Central Hub
+    TA((Travel Agent)):::hub
 
-    TA --> Performance
-    TA --> Environment
-    TA --> Actuators
-    TA --> Sensors
+    %% Branches
+    TA --> Perf(Performance):::perf
+    TA --> Env(Environment):::env
+    TA --> Act(Actuators):::act
+    TA --> Sens(Sensors):::sens
+
+    %% Performance Details
+    Perf --> P1(Accuracy):::item
+    Perf --> P2(Cheapness):::item
+    Perf --> P3(Speed):::item
+    
+    %% Environment Details
+    Env --> E1(User):::item
+    Env --> E2(Amadeus API):::item
+    Env --> E3(Python Runtime):::item
+
+    %% Actuator Details
+    Act --> A1(API Requests):::item
+    Act --> A2(Filtering):::item
+    Act --> A3(Sorting):::item
+
+    %% Sensor Details
+    Sens --> S1(User Prompt):::item
+    Sens --> S2(JSON Response):::item
+    Sens --> S3(Time Check):::item
 ```
 
 ## Detailed Breakdown
