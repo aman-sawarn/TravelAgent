@@ -12,7 +12,7 @@ The agent has evolved to handle increasingly complex user requests, moving from 
 *   **Capability**: Extracts `origin`, `destination`, and absolute `departure_date`.
 *   **Implementation Milestones**:
     *   `4b16bfc`: Initial "flight gpt" setup.
-    *   `5d7814e`: Introduced basic cheapest flight search functionality.
+    *   `5d7814e`: Introduced basic flight search functionality.
 
 ### Version 1: Relative Date Parsing & Standard Intent
 **Expectation**: The agent interprets relative time expressions and splits intents.
@@ -48,6 +48,16 @@ The agent has evolved to handle increasingly complex user requests, moving from 
     *   `0345dbc`: Connected advanced search with client-side filters to GPT service.
     *   `e8a7cd0`: Added sorting preference to intent fetching schema (`sorting_details`).
 
+### Version 1.3: Introduce the Hotel Search, to add on to the flight search
+**Expectation**: The agent should be able to search for hotels in a specific location, for a specific duration, and for a specific number of people.
+*   **Prompt**: "Find a hotel in New York for 2 nights for 2 adults and 1 child."
+*   **Capability**:
+    *   Extracts `origin`, `destination`, and absolute `check_in_date` and `check_out_date`.
+    *   Extracts `adults`, `children`, and `infants`.   
+    *   
+*   **Implementation Milestones**:
+    *   Implemented hotel search functionality.
+    *   Implemented hotel search intent fetching.
 ---
 
 ## Current Roadmap & Brainstorming
