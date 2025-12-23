@@ -110,6 +110,8 @@ class Search:
         if flight_search_query_object.non_stop:
             params["nonStop"] = "true"
 
+        print(f"DEBUG: Requesting {url} with params: {params}")
+
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
 
@@ -265,6 +267,8 @@ class Search:
         # 1. Map Inputs to Params
         params = self._map_search_params(flight_search_data_object, max_results)
 
+        print(f"DEBUG: Requesting {url} with params: {params}")
+
         # Execute Request
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
@@ -295,22 +299,30 @@ class Search:
         return {"source": "amadeus", "results": data}
     async def search_hotels_by_city(
         self, 
-        city_code: str, 
-        radius: int = 5, 
-        radius_unit: str = "KM", 
-        ratings: Optional[list[int]] = None
+        hotel_search_data: HotelSearchQueryDetails
     ) -> dict:
         """Search for hotels in a specific city using Amadeus Hotel List API."""
         token = await self.get_amadeus_token()
         url = f"{self.AMADEUS_BASE}/v1/reference-data/locations/hotels/by-city"
-        params = {"cityCode": city_code, "radius": radius, "radiusUnit": radius_unit}
-        if ratings:
-            params["ratings"] = ",".join(map(str, ratings))
         
+        params = {
+            "cityCode": hotel_search_data.city_code,
+            "radius": hotel_search_data.radius,
+            "radiusUnit": hotel_search_data.radius_unit
+        }
+        
+        if hotel_search_data.ratings:
+            params["ratings"] = ",".join(map(str, hotel_search_data.ratings))
+        
+        print(f"DEBUG: Requesting {url} with params: {params}")
+
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
+        
         if r.status_code != 200:
+            print(f"DEBUG: API Error {r.status_code}: {r.text}")
             raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
+            
         data = r.json()
         return {"source": "amadeus", "results": data}
 
@@ -323,7 +335,7 @@ if __name__ == "__main__":
     flight_search_data = FlightSearchQueryDetails(
         origin_iata="DEL",
         destination_iata="BOM",
-        departure_date="2026-06-12",
+        departure_date="2025-12-25",
         max_results=5
     )
     try:
@@ -339,7 +351,7 @@ if __name__ == "__main__":
     flight_search_data_adv = FlightSearchQueryDetails(
         origin_iata="DEL",
         destination_iata="BOM",
-        departure_date="2026-06-12",
+        departure_date="2025-12-25",
         max_results=5,
         sort_by=SortBy.PRICE
     )
@@ -352,7 +364,6 @@ if __name__ == "__main__":
             print(f"Top result duration: {offers[0]['itineraries'][0]}")
             print(f"Second result duration: {offers[1]['itineraries'][0]}")
 
-
     except Exception as e:
         print(e)
 
@@ -361,7 +372,7 @@ if __name__ == "__main__":
     flight_search_data_seats = FlightSearchQueryDetails(
          origin_iata="DEL",
          destination_iata="BOM",
-         departure_date="2026-06-12",
+         departure_date="2025-12-25",
          max_results=10,
          sort_by=SortBy.PRICE,
          min_bookable_seats=3
@@ -391,4 +402,6 @@ if __name__ == "__main__":
             print(f"Rank {i+1}: {off['name']} - {off['rating']} stars")
     except Exception as e:
         print(e)
+
+    
     

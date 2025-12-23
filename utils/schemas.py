@@ -55,3 +55,10 @@ class FlightSearchQueryDetails(BaseModel):
 	excluded_airlines: Optional[List[str]] = Field(None, description="List of IATA codes of airlines to exclude")
 	min_bookable_seats: Optional[int] = Field(None, description="Minimum number of bookable seats required")
 	instant_ticketing_required: Optional[bool] = Field(False, description="Whether to filter for flights that require instant ticketing")
+
+class HotelSearchQueryDetails(BaseModel):
+    """Model to fetch hotel search details for hotel search"""
+    city_code: str = Field(..., description="City code for the hotel search", max_length=150)
+    radius: Optional[int] = Field(5, description="Radius in kilometers for the hotel search", ge=1)
+    radius_unit: Optional[str] = Field("KM", description="Radius unit for the hotel search", max_length=2)
+    ratings: Optional[List[int]] = Field(None, description="List of ratings for the hotel search")

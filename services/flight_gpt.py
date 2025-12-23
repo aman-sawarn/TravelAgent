@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.schemas import UserIntent
 
 from utils.prompts import fetch_standard_flight_details, fetch_intent_of_the_query
-from services.flight_search import Search
+from services.search import Search
 from config.main_config import model_name
 from utils.output_reader import flight_offer_list_reader
 
