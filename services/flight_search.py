@@ -22,6 +22,7 @@ load_dotenv(dotenv_path)
 
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from typing import Optional
 from utils.schemas import FlightSearchQueryDetails, SortBy
 
 
@@ -114,23 +115,29 @@ class Search:
 
         return {"source": "amadeus", "results": r.json()}
 
-    async def search_flights_advanced(self, flight_search_data_object) -> dict:
+    async def search_flights_advanced(
+        self,
+        flight_search_data_object: FlightSearchQueryDetails,
+        sort_by: Optional[SortBy] = SortBy.PRICE,
+        max_stops: Optional[int] = 2,
+        min_bookable_seats: Optional[int] = 1,
+        instant_ticketing_required: Optional[bool] = None,
+        max_results: Optional[int] = 10
+    ) -> dict:
         """
         Perform an advanced flight search with client-side filtering and sorting.
         
-        This method extends the standard search by applying additional filters (e.g., max stops, 
-        min bookable seats, instant ticketing) and custom sorting logic (e.g., by duration, 
-        schedule, seat availability) that may not be fully supported by the underlying API.
-        
-        It accepts either `FlightSearchQueryDetails` for specific flight searches or 
-        `CheapestFlightSearchDetails` for date-flexible searches, adapting the parameters accordingly.
-        
         Args:
-            flight_search_data_object (Union[FlightSearchQueryDetails, CheapestFlightSearchDetails]): 
-                The search criteria object.
+            flight_search_data_object (FlightSearchQueryDetails): Base search criteria.
+            sort_by (Optional[SortBy]): Sorting criteria (overrides object).
+                Possible values: "price", "duration", "generated_departure_time", "generated_arrival_time", "number_of_bookable_seats", "last_ticketing_date".
+            max_stops (Optional[int]): Max stops filter (overrides object).
+            min_bookable_seats (Optional[int]): Min seats filter (overrides object).
+            instant_ticketing_required (Optional[bool]): Instant ticketing filter (overrides object).
+            max_results (Optional[int]): Max results to return (default 10).
         
         Returns:
-            dict: A dictionary containing the 'source' of data and the 'results' (flight sorted/filtered offers).
+            dict: Search results.
         """
         token = await self.get_amadeus_token()
         url = f"{self.AMADEUS_BASE}/v2/shopping/flight-offers"
@@ -139,52 +146,24 @@ class Search:
         params = {}
         query_obj = flight_search_data_object
         
-        # Handle different schemas
-        if isinstance(query_obj, FlightSearchQueryDetails):
-            params["originLocationCode"] = query_obj.origin_iata
-            params["destinationLocationCode"] = query_obj.destination_iata
-            params["departureDate"] = query_obj.departure_date
-            params["adults"] = query_obj.adults
-            params["currencyCode"] = query_obj.currency
-            params["max"] = int(query_obj.max_results or 10)
-            if query_obj.return_date:
-                params["returnDate"] = query_obj.return_date
-            if query_obj.travel_class:
-                params["travelClass"] = query_obj.travel_class
-            if query_obj.non_stop:
-                params["nonStop"] = "true"
-            if query_obj.included_airlines:
-                params["includedAirlineCodes"] = ",".join(query_obj.included_airlines)
-            if query_obj.excluded_airlines:
-                params["excludedAirlineCodes"] = ",".join(query_obj.excluded_airlines)
-            if query_obj.max_price:
-                params["maxPrice"] = int(query_obj.max_price)
-                
-        elif isinstance(query_obj, CheapestFlightSearchDetails):
-            params["originLocationCode"] = query_obj.origin
-            params["destinationLocationCode"] = query_obj.destination
-            # CheapestFlightSearchDetails might have range or multiple dates, but v2/offers needs specific date.
-            # If range is provided, we might need loop or just use first date? 
-            # For robustness, we'll try to use the departure_date directly. 
-            # If it's a range (e.g. "2023-12-01,2023-12-05"), this might fail or we should pick one.
-            # We will assume single date for simplicity in this move.
-            params["departureDate"] = query_obj.departure_date.split(",")[0] if query_obj.departure_date else None
-            
-            if query_obj.return_date:
-                 params["returnDate"] = query_obj.return_date.split(",")[0]
-            
-            # Default adults/currency if not in schema
-            params["adults"] = 1
-            params["currencyCode"] = "INR" 
-            params["max"] = 20
-            
-            if query_obj.nonStop:
-                params["nonStop"] = "true"
-            if query_obj.maxPrice:
-                params["maxPrice"] = int(query_obj.maxPrice)
-        else:
-             # Fallback or generic dict
-             pass
+        params["originLocationCode"] = query_obj.origin_iata
+        params["destinationLocationCode"] = query_obj.destination_iata
+        params["departureDate"] = query_obj.departure_date
+        params["adults"] = query_obj.adults
+        params["currencyCode"] = query_obj.currency
+        params["max"] = int(max_results or query_obj.max_results or 10)
+        if query_obj.return_date:
+            params["returnDate"] = query_obj.return_date
+        if query_obj.travel_class:
+            params["travelClass"] = query_obj.travel_class
+        if query_obj.non_stop:
+            params["nonStop"] = "true"
+        if query_obj.included_airlines:
+            params["includedAirlineCodes"] = ",".join(query_obj.included_airlines)
+        if query_obj.excluded_airlines:
+            params["excludedAirlineCodes"] = ",".join(query_obj.excluded_airlines)
+        if query_obj.max_price:
+            params["maxPrice"] = int(query_obj.max_price)
 
         # Execute Request
         async with httpx.AsyncClient() as client:
@@ -200,33 +179,33 @@ class Search:
         
         # --- Client Side Processing ---
         
-        # Extract filtering criteria
-        max_stops = getattr(query_obj, 'max_stops', None)
-        min_seats = getattr(query_obj, 'min_bookable_seats', None)
-        instant_ticketing = getattr(query_obj, 'instant_ticketing_required', False)
-        sort_by = getattr(query_obj, 'sort_by', None)
+        # Extract filtering criteria (Argument > Object)
+        _max_stops = max_stops if max_stops is not None else getattr(query_obj, 'max_stops', None)
+        _min_seats = min_bookable_seats if min_bookable_seats is not None else getattr(query_obj, 'min_bookable_seats', None)
+        _instant_ticketing = instant_ticketing_required if instant_ticketing_required is not None else getattr(query_obj, 'instant_ticketing_required', False)
+        _sort_by = sort_by if sort_by is not None else getattr(query_obj, 'sort_by', None)
 
         # 1. Apply Filters
-        if (max_stops is not None and max_stops > 0) or min_seats or instant_ticketing:
+        if (_max_stops is not None and _max_stops > 0) or _min_seats or _instant_ticketing:
             filtered_results = []
             for offer in results:
                 valid = True
                 
                 # Filter: Min Bookable Seats
-                if min_seats:
-                    if int(offer.get("numberOfBookableSeats", 0)) < min_seats:
+                if _min_seats:
+                    if int(offer.get("numberOfBookableSeats", 0)) < _min_seats:
                         valid = False
 
                 # Filter: Instant Ticketing Required
-                if valid and instant_ticketing:
+                if valid and _instant_ticketing:
                     if not offer.get("instantTicketingRequired", False):
                         valid = False
 
                 # Filter: Max Stops (if > 0)
-                if valid and max_stops is not None and max_stops > 0:
+                if valid and _max_stops is not None and _max_stops > 0:
                     for itinerary in offer.get("itineraries", []):
                         stops = len(itinerary.get("segments", [])) - 1
-                        if stops > max_stops:
+                        if stops > _max_stops:
                             valid = False
                             break
                             
@@ -235,32 +214,32 @@ class Search:
             results = filtered_results
 
         # 2. Sorting
-        if sort_by == SortBy.DEPARTURE_TIME:
+        if _sort_by == SortBy.DEPARTURE_TIME:
             def get_dep_time(offer):
                 try: return offer["itineraries"][0]["segments"][0]["departure"]["at"]
                 except: return "9999-12-31"
             results.sort(key=get_dep_time)
-        elif sort_by == SortBy.ARRIVAL_TIME:
+        elif _sort_by == SortBy.ARRIVAL_TIME:
              def get_arr_time(offer):
                 try: return offer["itineraries"][0]["segments"][-1]["arrival"]["at"]
                 except: return "9999-12-31"
              results.sort(key=get_arr_time)
-        elif sort_by == SortBy.DURATION:
+        elif _sort_by == SortBy.DURATION:
              def get_duration(offer):
                 try: return self._parse_duration(offer["itineraries"][0]["duration"])
                 except: return 999999
              results.sort(key=get_duration)
-        elif sort_by == SortBy.PRICE:
+        elif _sort_by == SortBy.PRICE:
              def get_price(offer):
                 try: return float(offer["price"]["total"])
                 except: return 0.0
              results.sort(key=get_price)
-        elif sort_by == SortBy.SEATS:
+        elif _sort_by == SortBy.SEATS:
              def get_seats(offer):
                 try: return int(offer.get("numberOfBookableSeats", 0))
                 except: return 0
              results.sort(key=get_seats, reverse=True) # Descending (more seats first)
-        elif sort_by == SortBy.LAST_TICKETING_DATE:
+        elif _sort_by == SortBy.LAST_TICKETING_DATE:
              def get_ltd(offer):
                 return offer.get("lastTicketingDate", "9999-12-31")
              results.sort(key=get_ltd) # Ascending (earlier deadline first)

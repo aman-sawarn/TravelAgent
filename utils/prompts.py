@@ -2,9 +2,38 @@ import json
 from datetime import datetime
 from ollama import chat
 from pydantic import ValidationError
-
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.schemas import FlightSearchQueryDetails, FetchIntent
 from config.main_config import model_name
+
+def fetch_date_range_from_query(prompt: str, model_to_be_used: str = model_name) -> dict:
+	"""Extract specific date or date range details from the user query."""
+	now = datetime.now().strftime("%Y-%m-%d")
+	extraction_prompt = f"""
+    Current date: {now}
+    Extract the date or date range mentioned in the user prompt. 
+    Convert relative terms (e.g., "next Monday", "this weekend", "in two weeks") into absolute YYYY-MM-DD format.
+
+    Prompt: "{prompt}"
+
+    Return JSON format only:
+    {{
+        "start_date": "YYYY-MM-DD",
+        "end_date": "YYYY-MM-DD",
+        "is_range": boolean
+    }}
+    """
+	response = chat(
+		model=model_to_be_used,
+		messages=[{'role': 'user', 'content': extraction_prompt}],
+	)
+	try:
+		details_json = response['message']['content'].strip().strip("```").replace("json", "").strip()
+		return json.loads(details_json)
+	except (json.JSONDecodeError, Exception):
+		return {"start_date": None, "end_date": None, "is_range": False}
 
 
 def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -> FetchIntent:
@@ -25,7 +54,9 @@ def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -
 
     Prompt: "{prompt}"
 
-    Provide the details strictly in JSON format with key "intent".
+    Provide the details strictly in JSON format with keys:
+    - "intent": One of "find_flights_advanced", "find_flights_standard", "other".
+    - "date_range": Boolean. Set to true if the user implies flexible dates, a date range (e.g. "next week", "in December"), or finding the cheapest date. Set to false for specific single dates.
     """
 	response = chat(
 		model=model_to_be_used,
@@ -89,3 +120,9 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 		raise ValueError(f"LLM Error:\n{details_json}\n{e}")
 	return details
 
+if __name__ == "__main__":
+	# Example usage
+	user_prompt = "Find flights from LON to JFK next month"
+	# flight_details = fetch_standard_flight_details(user_prompt)
+	result = fetch_date_range_from_query(user_prompt)
+	print(result)

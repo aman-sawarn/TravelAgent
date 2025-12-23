@@ -4,6 +4,8 @@ import sys
 import pandas as pd
 # Add project root to sys.path (parent of services/)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.schemas import UserIntent
+
 from utils.prompts import fetch_standard_flight_details, fetch_intent_of_the_query
 from services.flight_search import Search
 from config.main_config import model_name
@@ -24,19 +26,19 @@ if __name__ == "__main__":
 	
 	obj = Search()
 	
-	if user_intent.intent == "find_flights_advanced":
+	if user_intent.intent == UserIntent.FIND_FLIGHTS_ADVANCED:
 		print(f"{user_intent.intent} detected, using advanced search")
-        # Use simple standard details extraction which now supports advanced fields?
-        # Note: If intent is "cheapest flight dates" specifically, we might need fetch_cheapest_flight_details.
-        # But prompts.py now has unified intent for "advanced" covering filtering.
-        # Let's try flight_details standard first as it covers almost everything except flexible date ranges?
-        # Actually, for "find_cheapest_flight_dates", we might want separate handling if we kept that function.
-        # But the prompt says "find_flights_advanced" covers "searching for cheapest dates".
-        # Let's check prompt context. If "cheapest dates" we need CheapesSchema.
-        # However, for now, let's map advanced to Standard Details + Advanced Search 
-        # OR CheapesDetails if prompt implies date range?
-        # For simplicity, use Standard Details as it has sort/filter.
-		flight_details = fetch_standard_flight_details(prompt) 
+		
+		# Check if the user is looking for a date range/cheapest dates
+		# fetch_intent_of_the_query now returns date_range boolean
+		if user_intent.date_range:
+			print("Date Range / Flexible Dates detected.")
+			from utils.prompts import fetch_cheapest_flight_details
+			flight_details = fetch_cheapest_flight_details(prompt)
+		else:
+			print("Specific Date detected.")
+			flight_details = fetch_standard_flight_details(prompt)
+			
 		print("flight_details : ", flight_details) 
 		res = asyncio.run(obj.search_flights_advanced(flight_details)) 
 		if 'data' in res.get('results', {}):
@@ -45,7 +47,7 @@ if __name__ == "__main__":
 		else:
 			print("No flight data found or Mock Error:", res.get("error"))
 		
-	elif user_intent.intent == "find_flights_standard": 
+	elif user_intent.intent == UserIntent.FIND_FLIGHTS_STANDARD: 
 		print(f"{user_intent.intent} detected, using standard search") 
 		flight_details = fetch_standard_flight_details(prompt)
 		print("flight_details : ", flight_details)

@@ -3,9 +3,15 @@ from typing import Optional, List
 from enum import Enum
 from pydantic import BaseModel, Field
 
+class UserIntent(str, Enum):
+	FIND_FLIGHTS_ADVANCED = "find_flights_advanced"
+	FIND_FLIGHTS_STANDARD = "find_flights_standard"
+	OTHER = "other"
+
 class FetchIntent(BaseModel):
 	"""Model to fetch intent for a given user"""
-	intent: str = Field(..., description="User's intent string", max_length=150)
+	intent: UserIntent = Field(..., description="User's intent string")
+	date_range: Optional[bool] = Field(False, description="User's Date Range")
 
 
 class SortBy(str, Enum):
