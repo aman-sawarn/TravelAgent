@@ -18,9 +18,8 @@ mindmap
       User Satisfaction
       Error Handling Reliability
     Environment
-      User (Chat Interface)
+      User
       Amadeus Travel API
-      Internet / Network
       Self-hosted Python Runtime
     Actuators
       API Requests (Flight/Hotel Search)
@@ -45,7 +44,7 @@ The criteria used to evaluate the success of the agent's behavior:
 The context in which the agent operates:
 - **User**: The human providing natural language prompts (e.g., "Find me cheapest flights...").
 - **Amadeus API**: The external service providing real-time flight and hotel data.
-- **Digital Infrastructure**: The local Python environment, network connectivity to `api.amadeus.com`.
+- **Digital Infrastructure**: The local Python environment.
 
 ### 3. Actuators
 The mechanisms the agent uses to act upon the environment:
