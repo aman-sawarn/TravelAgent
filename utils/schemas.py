@@ -14,6 +14,8 @@ class SortBy(str, Enum):
 	DURATION = "duration"
 	DEPARTURE_TIME = "generated_departure_time" # Note: Amadeus might name this differently or we sort client side
 	ARRIVAL_TIME = "generated_arrival_time"
+	SEATS = "number_of_bookable_seats"
+	LAST_TICKETING_DATE = "last_ticketing_date"
 
 class FlightSearchQueryDetails(BaseModel):
 	"""Model to fetch flight search details for standard/direct flight search"""
@@ -33,6 +35,8 @@ class FlightSearchQueryDetails(BaseModel):
 	max_stops: Optional[int] = Field(None, description="Maximum number of stops (0, 1, 2). If 0, same as non_stop=True", ge=0, le=2)
 	included_airlines: Optional[List[str]] = Field(None, description="List of IATA codes of airlines to include")
 	excluded_airlines: Optional[List[str]] = Field(None, description="List of IATA codes of airlines to exclude")
+	min_bookable_seats: Optional[int] = Field(None, description="Minimum number of bookable seats required")
+	instant_ticketing_required: Optional[bool] = Field(False, description="Whether to filter for flights that require instant ticketing")
 
 class CheapestFlightSearchDetails(BaseModel):
 	"""Model to fetch flight search details for finding the cheapest flight dates"""

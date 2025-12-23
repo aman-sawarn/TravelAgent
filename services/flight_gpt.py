@@ -28,7 +28,7 @@ if __name__ == "__main__":
 		print(f"{user_intent.intent} detected, using tool find_cheapest_flights")
 		flight_details = fetch_cheapest_flight_details(prompt) 
 		print("flight_details : ", flight_details) 
-		res = asyncio.run(obj.search_cheapest_flights_date_range(flight_details)) 
+		res = asyncio.run(obj.search_flights_advanced(flight_details)) 
 		print("Amadeus Response:", res) 
 		
 	elif user_intent.intent == "find_direct_flights": 

@@ -6,8 +6,18 @@ import re
 import httpx
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import HTTPException
-from langchain_core.tools import tool
+try:
+    from fastapi import HTTPException
+except ImportError:
+    class HTTPException(Exception):
+        def __init__(self, status_code: int, detail: str = None):
+            self.status_code = status_code
+            self.detail = detail
+            super().__init__(f"{status_code}: {detail}")
+try:
+    from langchain_core.tools import tool
+except ImportError:
+    def tool(x): return x
 
 # Explicitly load .env from the project root (parent of services/)
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
@@ -66,15 +76,11 @@ class Search:
         return hours * 60 + minutes
 
     async def search_flights_on_a_date(self, flight_search_query_object: FlightSearchQueryDetails) -> dict:
-        """Search for flights based on the provided search criteria.
-
-        Args:
-            flight_search_query_object (FlightSearchQueryDetails): The search criteria.
-        Returns:
-            dict: The search results.
+        """
+        Search for flights using standard criteria.
+        This provides a direct search without extensive client-side post-processing.
         """
         token = await self.get_amadeus_token()
-
         url = f"{self.AMADEUS_BASE}/v2/shopping/flight-offers"
         
         # Base parameters
@@ -83,193 +89,219 @@ class Search:
             "destinationLocationCode": flight_search_query_object.destination_iata,
             "departureDate": flight_search_query_object.departure_date,
             "adults": flight_search_query_object.adults,
-            "infants": flight_search_query_object.infants,
-            "children": flight_search_query_object.children,
             "currencyCode": flight_search_query_object.currency,
-            "travelClass": flight_search_query_object.travel_class or 'ECONOMY',
             "max": int(flight_search_query_object.max_results or 5)
         }
-
-        # --- Filtering Parameters ---
         
-        # Stops
-        if flight_search_query_object.non_stop:
-            params["nonStop"] = "true"
-        elif flight_search_query_object.max_stops == 0:
-            params["nonStop"] = "true"
-        else:
-            params["nonStop"] = "false"
-
-        # Airlines
-        if flight_search_query_object.included_airlines:
-            params["includedAirlineCodes"] = ",".join(flight_search_query_object.included_airlines)
-        
-        if flight_search_query_object.excluded_airlines:
-            params["excludedAirlineCodes"] = ",".join(flight_search_query_object.excluded_airlines)
-
-        # Optional Dates / Price
+        # Optional params
         if flight_search_query_object.return_date:
             params["returnDate"] = flight_search_query_object.return_date
+        if flight_search_query_object.travel_class:
+            params["travelClass"] = flight_search_query_object.travel_class
+        if flight_search_query_object.non_stop:
+            params["nonStop"] = "true"
 
-        if flight_search_query_object.max_price is not None:
-            params["maxPrice"] = int(flight_search_query_object.max_price)
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
 
-        # --- Sorting (API side) ---
-        # Amadeus supports 'price', 'duration', 'carrier', 'segments'
-        # NOTE: Test API seems to reject 'sort' param with 400 in some cases. 
-        # Switching to client-side sorting for robustness.
-        # if flight_search_data_object.sort_by == SortBy.PRICE:
-        #     params["sort"] = "price"
-        # elif flight_search_data_object.sort_by == SortBy.DURATION:
-        #     params["sort"] = "duration"
+        if r.status_code != 200:
+             raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
+
+        return {"source": "amadeus", "results": r.json()}
+
+    async def search_flights_advanced(self, flight_search_data_object) -> dict:
+        """
+        Advanced Search for flights (Renamed from search_cheapest_flights_date_range).
+        Performs search and applies client-side filtering and sorting (e.g. max stops, duration, time).
+        Supports both FlightSearchQueryDetails and CheapestFlightSearchDetails (mapping inputs).
+        """
+        token = await self.get_amadeus_token()
+        url = f"{self.AMADEUS_BASE}/v2/shopping/flight-offers"
         
+        # 1. Map Inputs to Params
+        params = {}
+        query_obj = flight_search_data_object
+        
+        # Handle different schemas
+        if isinstance(query_obj, FlightSearchQueryDetails):
+            params["originLocationCode"] = query_obj.origin_iata
+            params["destinationLocationCode"] = query_obj.destination_iata
+            params["departureDate"] = query_obj.departure_date
+            params["adults"] = query_obj.adults
+            params["currencyCode"] = query_obj.currency
+            params["max"] = int(query_obj.max_results or 10)
+            if query_obj.return_date:
+                params["returnDate"] = query_obj.return_date
+            if query_obj.travel_class:
+                params["travelClass"] = query_obj.travel_class
+            if query_obj.non_stop:
+                params["nonStop"] = "true"
+            if query_obj.included_airlines:
+                params["includedAirlineCodes"] = ",".join(query_obj.included_airlines)
+            if query_obj.excluded_airlines:
+                params["excludedAirlineCodes"] = ",".join(query_obj.excluded_airlines)
+            if query_obj.max_price:
+                params["maxPrice"] = int(query_obj.max_price)
+                
+        elif isinstance(query_obj, CheapestFlightSearchDetails):
+            params["originLocationCode"] = query_obj.origin
+            params["destinationLocationCode"] = query_obj.destination
+            # CheapestFlightSearchDetails might have range or multiple dates, but v2/offers needs specific date.
+            # If range is provided, we might need loop or just use first date? 
+            # For robustness, we'll try to use the departure_date directly. 
+            # If it's a range (e.g. "2023-12-01,2023-12-05"), this might fail or we should pick one.
+            # We will assume single date for simplicity in this move.
+            params["departureDate"] = query_obj.departure_date.split(",")[0] if query_obj.departure_date else None
+            
+            if query_obj.return_date:
+                 params["returnDate"] = query_obj.return_date.split(",")[0]
+            
+            # Default adults/currency if not in schema
+            params["adults"] = 1
+            params["currencyCode"] = "INR" 
+            params["max"] = 20
+            
+            if query_obj.nonStop:
+                params["nonStop"] = "true"
+            if query_obj.maxPrice:
+                params["maxPrice"] = int(query_obj.maxPrice)
+        else:
+             # Fallback or generic dict
+             pass
+
         # Execute Request
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
 
         if r.status_code != 200:
+            if r.status_code == 500:
+                 return {"source": "amadeus", "results": [], "error": "Amadeus API 500 System Error"}
             raise HTTPException(status_code=r.status_code, detail=f"Amadeus search failed: {r.text}")
 
         data = r.json()
         results = data.get("data", [])
+        
+        # --- Client Side Processing ---
+        
+        # Extract filtering criteria
+        max_stops = getattr(query_obj, 'max_stops', None)
+        min_seats = getattr(query_obj, 'min_bookable_seats', None)
+        instant_ticketing = getattr(query_obj, 'instant_ticketing_required', False)
+        sort_by = getattr(query_obj, 'sort_by', None)
 
-        # --- Post-Processing (Client Side) ---
-
-        # 1. Filter by max_stops (if > 0, since API only handles boolean nonStop)
-        if flight_search_query_object.max_stops is not None and flight_search_query_object.max_stops > 0:
+        # 1. Apply Filters
+        if (max_stops is not None and max_stops > 0) or min_seats or instant_ticketing:
             filtered_results = []
             for offer in results:
                 valid = True
-                for itinerary in offer.get("itineraries", []):
-                    # Segments - 1 = Stops
-                    stops = len(itinerary.get("segments", [])) - 1
-                    if stops > flight_search_query_object.max_stops:
+                
+                # Filter: Min Bookable Seats
+                if min_seats:
+                    if int(offer.get("numberOfBookableSeats", 0)) < min_seats:
                         valid = False
-                        break
+
+                # Filter: Instant Ticketing Required
+                if valid and instant_ticketing:
+                    if not offer.get("instantTicketingRequired", False):
+                        valid = False
+
+                # Filter: Max Stops (if > 0)
+                if valid and max_stops is not None and max_stops > 0:
+                    for itinerary in offer.get("itineraries", []):
+                        stops = len(itinerary.get("segments", [])) - 1
+                        if stops > max_stops:
+                            valid = False
+                            break
+                            
                 if valid:
                     filtered_results.append(offer)
             results = filtered_results
 
-        # 2. Sort by other criteria
-        if flight_search_query_object.sort_by == SortBy.DEPARTURE_TIME:
-            # Sort by first segment departure of first itinerary
+        # 2. Sorting
+        if sort_by == SortBy.DEPARTURE_TIME:
             def get_dep_time(offer):
-                try:
-                    return offer["itineraries"][0]["segments"][0]["departure"]["at"]
-                except (KeyError, IndexError):
-                    return "9999-12-31" # Push to end if missing
+                try: return offer["itineraries"][0]["segments"][0]["departure"]["at"]
+                except: return "9999-12-31"
             results.sort(key=get_dep_time)
+        elif sort_by == SortBy.ARRIVAL_TIME:
+             def get_arr_time(offer):
+                try: return offer["itineraries"][0]["segments"][-1]["arrival"]["at"]
+                except: return "9999-12-31"
+             results.sort(key=get_arr_time)
+        elif sort_by == SortBy.DURATION:
+             def get_duration(offer):
+                try: return self._parse_duration(offer["itineraries"][0]["duration"])
+                except: return 999999
+             results.sort(key=get_duration)
+        elif sort_by == SortBy.PRICE:
+             def get_price(offer):
+                try: return float(offer["price"]["total"])
+                except: return 0.0
+             results.sort(key=get_price)
+        elif sort_by == SortBy.SEATS:
+             def get_seats(offer):
+                try: return int(offer.get("numberOfBookableSeats", 0))
+                except: return 0
+             results.sort(key=get_seats, reverse=True) # Descending (more seats first)
+        elif sort_by == SortBy.LAST_TICKETING_DATE:
+             def get_ltd(offer):
+                return offer.get("lastTicketingDate", "9999-12-31")
+             results.sort(key=get_ltd) # Ascending (earlier deadline first)
         
-        elif flight_search_query_object.sort_by == SortBy.ARRIVAL_TIME:
-            # Sort by last segment arrival of first itinerary works for O&D
-            def get_arr_time(offer):
-                try:
-                    return offer["itineraries"][0]["segments"][-1]["arrival"]["at"]
-                except (KeyError, IndexError):
-                    return "9999-12-31"
-            results.sort(key=get_arr_time)
-            
-        elif flight_search_query_object.sort_by == SortBy.DURATION:
-            # Client side duration sort
-            def get_duration(offer):
-                try:
-                    return self._parse_duration(offer["itineraries"][0]["duration"])
-                except (KeyError, IndexError):
-                    return 999999
-            results.sort(key=get_duration)
-            
-        elif flight_search_query_object.sort_by == SortBy.PRICE:
-            # Client side price sort (usually default, but ensure it)
-            def get_price(offer):
-                try:
-                    return float(offer["price"]["total"])
-                except (KeyError, ValueError):
-                    return 0.0
-            results.sort(key=get_price)
-
-        # Update data with processed results
         data["data"] = results
-
         return {"source": "amadeus", "results": data}
-
-    async def search_cheapest_flights_date_range(self, flight_search_data_object: CheapestFlightSearchDetails) -> dict:
-        """
-        Search for cheapest flight dates.
-        Endpoint: /v1/shopping/flight-dates
-        """
-        token = await self.get_amadeus_token()
-            
-        url = f"{self.AMADEUS_BASE}/v1/shopping/flight-dates"
-        params = {
-            "origin": flight_search_data_object.origin,
-            "destination": flight_search_data_object.destination,
-            "oneWay": str(flight_search_data_object.oneWay).lower(),
-        }
-
-        if flight_search_data_object.return_date:
-            params["oneWay"] = "false"
-            params["returnDate"] = flight_search_data_object.return_date
-        else:
-            params["oneWay"] = "true"
-
-        if flight_search_data_object.departure_date:
-            params["departureDate"] = flight_search_data_object.departure_date
-
-        async with httpx.AsyncClient() as client:
-            r = await client.get(url, headers={"Authorization": f"Bearer {token}"}, params=params)
-
-        if r.status_code != 200:
-            if r.status_code == 500:
-                print(f"Warning: Amadeus API returned 500 for cheapest flight date search. This is common in the Test Environment for unsupported routes.")
-                # Return empty list to avoid crashing logic, let agent handle "no inspiration found"
-                return {"source": "amadeus", "results": [], "error": "Amadeus API 500 System Error (Test Env limitation)"}
-            raise HTTPException(status_code=r.status_code, detail=f"Amadeus cheapest flight search failed: {r.text}")
-
-        return {"source": "amadeus", "results": r.json()}
 
 
 if __name__ == "__main__":
     search = Search()
 
-    # 1. Standard Search Data (Testing Filters)
-    print("\n--- 1. Testing Filtered Search (MAD->LON, Sort: DURATION) ---")
+    # 1. Standard Search (Simple)
+    print("\n--- 1. Testing Standard Search (MAD->LON) ---")
     flight_search_data = FlightSearchQueryDetails(
+        origin_iata="MAD",
+        destination_iata="LON",
+        departure_date="2026-06-12",
+        max_results=5
+    )
+    try:
+        results = asyncio.run(search.search_flights_on_a_date(flight_search_data))
+        print(f"Found {len(results.get('results', {}).get('data', []))} offers.")
+    except Exception as e:
+        print(f"Search failed: {e}")
+
+    # 2. Testing Advanced Search (With client sort)
+    print("\n--- 2. Testing Advanced Search (MAD->LON, Sort: DURATION) ---")
+    flight_search_data_adv = FlightSearchQueryDetails(
         origin_iata="MAD",
         destination_iata="LON",
         departure_date="2026-06-12",
         max_results=5,
         sort_by=SortBy.DURATION
     )
-    
     try:
-        results = asyncio.run(search.search_flights_on_a_date(flight_search_data))
+        results = asyncio.run(search.search_flights_advanced(flight_search_data_adv))
         offers = results.get("results", {}).get("data", [])
         print(f"Found {len(offers)} offers.")
         if offers:
             print(f"Top result duration: {offers[0]['itineraries'][0]['duration']}")
-            print(f"Top result price: {offers[0]['price']['total']}")
     except Exception as e:
-        print(f"Search failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(e)
 
-    time.sleep(2) # Avoid Rate Limits
-
-    # 2. Testing Client Side Sort (Departure Time)
-    print("\n--- 2. Testing Sort by Departure Time ---")
-    flight_search_data_dep = FlightSearchQueryDetails(
-        origin_iata="MAD",
-        destination_iata="LON",
-        departure_date="2026-06-12",
-        max_results=5,
-        sort_by=SortBy.DEPARTURE_TIME
+    # 3. Testing New Filters/Sorts
+    print("\n--- 3. Testing Sort by SEATS and Min Seats Filter ---")
+    flight_search_data_seats = FlightSearchQueryDetails(
+         origin_iata="MAD",
+         destination_iata="LON",
+         departure_date="2026-06-12",
+         max_results=10,
+         sort_by=SortBy.SEATS,
+         min_bookable_seats=3
     )
     try:
-        results = asyncio.run(search.search_flights_on_a_date(flight_search_data_dep))
+        results = asyncio.run(search.search_flights_advanced(flight_search_data_seats))
         offers = results.get("results", {}).get("data", [])
-        print(f"Found {len(offers)} offers.")
+        print(f"Found {len(offers)} offers with >= 3 seats.")
         for i, off in enumerate(offers[:3]):
-             dep = off['itineraries'][0]['segments'][0]['departure']['at']
-             print(f"Rank {i+1}: {dep}")
+             print(f"Rank {i+1}: {off.get('numberOfBookableSeats')} seats")
     except Exception as e:
         print(e)

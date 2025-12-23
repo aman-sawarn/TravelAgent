@@ -11,65 +11,71 @@ def fetch_intent_of_the_query(prompt: str, model_to_be_used: str = model_name) -
 	"""Extract the details from the prompt fetch the Intent of the user query"""
 
 	extraction_prompt = f"""
-    You are a helpful Travel Agent that the user intent from user prompts.
+    You are a helpful Travel Agent that identifies the user intent from user prompts.
 
-    Extract the Intent from the prompt using given details for each prompt:
+    Extract the Intent from the prompt:
     
-    1. Find Cheapest Flight : If the user is looking to find the cheapest flight options available, return "find_cheapest_flight" in this case.
-    2. Find Direct Flights : If the user is looking to find non-stop flight options available, return "find_direct_flights" in this case.
-	3. Other: If the user is not looking to search for flights or hotels, return "other" in this case.
+    1. "find_flights_advanced": If the user is looking for flight options with specific sorting (e.g. cheapest, fastest, earliest) OR advanced filtering (e.g. max stops, refundable, specific airlines, seat count) OR searching for cheapest dates. 
+       - KEYWORDS: "cheapest", "fastest", "shortest duration", "direct", "min seats", "refundable", "sort by".
+    
+    2. "find_flights_standard": If the user is making a simple point-to-point flight search without complex sorting or advanced filters (other than basic class/passengers).
+       - KEYWORDS: "find flights", "show me flights", "flights from X to Y".
+    
+    3. "other": If the user is not looking to search for flights, return "other".
 
     Prompt: "{prompt}"
 
-    Provide the details strictly in JSON format.
+    Provide the details strictly in JSON format with key "intent".
     """
 	response = chat(
-		model=model_to_be_used,  # or 'qwen3:8b' if available locally
+		model=model_to_be_used,
 		messages=[{'role': 'user', 'content': extraction_prompt}],
 	)
 	details_json = response['message']['content']
-	# --- Clean and extract valid JSON ---
 	try:
-		# Remove markdown fences or extra text if the LLM adds them
 		details_json = details_json.strip().strip("```").replace("json", "").strip()
 		parsed = json.loads(details_json)
-	except json.JSONDecodeError as e:
-		raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
-	# --- Validate and format using the Pydantic model ---
-	try:
 		details = FetchIntent(**parsed)
-	except ValidationError as e:
-		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
+	except (json.JSONDecodeError, ValidationError) as e:
+		# Fallback to standard if ambiguous or error, or raise
+		# For robustness, let's default to standard if parsing fails but logged
+		print(f"Intent Parsing Error: {e}")
+		details = FetchIntent(intent="find_flights_standard")
 
 	return details
 
 
 def fetch_standard_flight_details(user_prompt: str, current_model: str = model_name) -> FlightSearchQueryDetails:
-	"""Extract the details from the prompt required to search a Flight (Standard/Direct)"""
+	"""Extract details for Standard/Advanced Flight Search (Unified in FlightSearchQueryDetails)"""
 	now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 	extraction_prompt = f"""
-	You are a helpful Travel Agent that extracts flight search details from user prompts.
-	The Current date and time: {now}
+	You are a helpful Travel Agent that extracts flight search details.
+	Current time: {now}
 
-	Extract the following details from the prompt:
-	1. "origin_iata": IATA code for Origin city
-	2. "destination_iata": IATA code for Destination city
-	3. "departure_date": Departure date in YYYY-MM-DD format. If it is presented as relative date (like tomorrow, next Monday etc.), convert it to absolute date based on the current date and time:{now}.
-	4. "return_date": Return date in YYYY-MM-DD format (if mentioned)
-	5. "max_results": Total number of flight options to return (if mentioned). If it is mentioned in words like 'five', convert it to numeric format.
-	6. Sorting Preference: Whether to sort by price, duration, or departure time (if mentioned).
-	7. "adults": Number of adult passengers (default is 1 if not mentioned) for whuch we need to search the flights. If it is mentioned in numbers like 'two adults', convert it to numeric format.
-	8. "currency": Currency code for the flight search (default is INR if not mentioned)
-	9. "travel_class": Travel class for the flight search (default is ECONOMY if not mentioned)
-	10. "infants": Number of Infant passengers (default is 0 if not mentioned). If it is mentioned in numbers like 'one infant', 'an infant' convert it to numeric format.
-	11. "children": Number of Children passengers (default is 0 if not mentioned). If it is mentioned in numbers like 'two children', convert it to numeric format.
-	12. "non_stop": Whether to search for non-stop flights only (default is False if not mentioned) - usually False unless direct is requested.
-	13. "max_price": Maximum price for the flight search (if mentioned). Eg: under 15k, below 20000 etc. Return value as a Int.
+	Extract the following FlightSearchQueryDetails from the prompt:
+	1. "origin_iata": IATA code (e.g. LON, JFK).
+	2. "destination_iata": IATA code.
+	3. "departure_date": YYYY-MM-DD. Convert relative dates (tomorrow, next Fri) to absolute.
+	4. "return_date": YYYY-MM-DD (Optional).
+	5. "adults": Int (Default 1).
+	6. "children": Int (Default 0).
+	7. "infants": Int (Default 0).
+	8. "travel_class": "ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST" (Default ECONOMY).
+	9. "currency": Default "INR".
+	10. "non_stop": Boolean (True/False).
+	11. "max_price": Int (Optional).
+	12. "max_results": Int (Default 10).
+	13. "sort_by": Options: "price", "duration", "generated_departure_time", "generated_arrival_time", "number_of_bookable_seats", "last_ticketing_date". 
+        - Default to "price" if "cheapest" is asked.
+        - Default to "duration" if "fastest/shortest" is asked.
+    14. "max_stops": Int (0, 1, 2). If "direct" or "non-stop" is requested, set max_stops=0.
+    15. "min_bookable_seats": Int (Optional).
+    16. "instant_ticketing_required": Boolean (Optional).
 
 	Prompt: "{user_prompt}"
 
-	Provide the details strictly in JSON format.
+	Provide details strictly in JSON.
 	"""
 
 	response = chat(model=current_model, messages=[{'role': 'user', 'content': extraction_prompt}])
@@ -78,35 +84,32 @@ def fetch_standard_flight_details(user_prompt: str, current_model: str = model_n
 	try:
 		details_json = details_json.strip().strip("```").replace("json", "").strip()
 		parsed = json.loads(details_json)
-	except json.JSONDecodeError as e:
-		raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
-	try:
 		details = FlightSearchQueryDetails(**parsed)
-	except ValidationError as e:
-		print(FlightSearchQueryDetails)
-		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
+	except (json.JSONDecodeError, ValidationError) as e:
+		raise ValueError(f"LLM Error:\n{details_json}\n{e}")
 	return details
 
 
 def fetch_cheapest_flight_details(user_prompt: str, current_model: str = model_name) -> CheapestFlightSearchDetails:
-	"""Extract the details from the prompt required to search for Cheapest Flight Dates"""
+	"""Extract details for Cheapest Date Search (Flexible Dates)"""
 	now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 	extraction_prompt = f"""
-	You are a helpful Travel Agent that extracts details for finding the CHEAPEST FLIGHT DATES.
-	The Current date and time: {now}
+    You are a helpful Travel Agent extracting details for finding CHEAPEST FLIGHT DATES/RANGES.
+	Current time: {now}
 
-	Extract the following details from the prompt:
-	1. "origin": IATA code for Origin city or Airport (e.g. LON for London, NYC for New York, DEL for Delhi).
-	2. "destination": IATA code for Destination city or Airport (Optional). If checks for "anywhere" or "cheapest flights from [Origin]", leave this null.
-	3. "departure_date": Departure date in YYYY-MM-DD format (Optional). Can also be a date range like "YYYY-MM-DD,YYYY-MM-DD".
-	4. "nonStop": Whether to search for non-stop flights only (default is False).
-	5. "maxPrice": Maximum price for the flight search (if mentioned). Return value as an Int.
-	6. "oneWay": Whether to search for one-way flights only (default is False).
+	Extract:
+	1. "origin": IATA code.
+	2. "destination": IATA code (Optional).
+	3. "departure_date": YYYY-MM-DD or comma-separated range (Optional).
+	4. "return_date": YYYY-MM-DD or range (Optional).
+	5. "nonStop": Boolean.
+	6. "maxPrice": Int (Optional).
+	7. "oneWay": Boolean (Default True unless return date specified).
 
 	Prompt: "{user_prompt}"
 
-	Provide the details strictly in JSON format.
+    Provide details strictly in JSON.
 	"""
 
 	response = chat(model=current_model, messages=[{'role': 'user', 'content': extraction_prompt}])
@@ -115,11 +118,8 @@ def fetch_cheapest_flight_details(user_prompt: str, current_model: str = model_n
 	try:
 		details_json = details_json.strip().strip("```").replace("json", "").strip()
 		parsed = json.loads(details_json)
-	except json.JSONDecodeError as e:
-		raise ValueError(f"LLM returned invalid JSON:\n{details_json}\nError: {e}")
-	try:
 		details = CheapestFlightSearchDetails(**parsed)
-	except ValidationError as e:
-		raise ValueError(f"Parsed JSON does not match schema:\n{e}")
+	except (json.JSONDecodeError, ValidationError) as e:
+		raise ValueError(f"LLM Error:\n{details_json}\n{e}")
 
 	return details
