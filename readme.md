@@ -1,6 +1,11 @@
 # Travel Agent
+ 
+![Travel Agent Demo](./docs/travel_agent_demo.gif)
+
 
 A state-of-the-art Travel Agent designed to revolutionize how users plan their journeys. By integrating advanced Large Language Models (LLMs) with robust flight search APIs (Amadeus), this agent goes beyond simple keyword matching. It comprehends natural language nuances, complex date logic, and specific user preferences to deliver highly relevant travel options. Whether you're looking for the cheapest getaway, a fast business trip, or a multi-leg vacation, this agent interprets your intent with precision.
+
+
 
 ## Features & Capabilities
 
