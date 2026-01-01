@@ -11,4 +11,5 @@ data/models/
 dist/
 .conda/
 .idea/
+docs/HOW_TO_RUN_locally.md
 build/
