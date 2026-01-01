@@ -9,10 +9,10 @@ load_dotenv(dotenv_path)
 
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from services.environment import Search, CheapestFlightSearchDetails
+from services.environment import Actuator, CheapestFlightSearchDetails
 
 async def test_routes():
-    search = Search()
+    search = Actuator()
     routes = [
         ("MAD", "MUC"),
         ("LHR", "JFK"),

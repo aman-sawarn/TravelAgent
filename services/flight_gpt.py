@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.sensors import UserIntent
 
 from utils.prompts import fetch_standard_flight_details, fetch_intent_of_the_query
-from services.environment import Search
+from services.environment import Actuator
 from config.main_config import model_name
 from utils.output_reader import flight_offer_list_reader
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 	print("*-" * 40)
 	print("intent : ", user_intent)
 	
-	obj = Search()
+	obj = Actuator()
 	
 	if user_intent.intent == UserIntent.FIND_FLIGHTS_ADVANCED:
 		print(f"{user_intent.intent} detected, using advanced search")
