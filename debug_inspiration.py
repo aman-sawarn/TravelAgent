@@ -11,10 +11,10 @@ load_dotenv(dotenv_path)
 
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from services.search import Search
+from services.environment import Actuator
 
 async def test_inspiration_endpoint():
-    search = Search()
+    search = Actuator()
     token = await search.get_amadeus_token()
     base_url = "https://test.api.amadeus.com/v1/shopping/flight-destinations"
     

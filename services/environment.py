@@ -23,11 +23,11 @@ load_dotenv(dotenv_path)
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from typing import Optional
-from utils.schemas import FlightSearchQueryDetails, SortBy, HotelSearchQueryDetails
+from utils.sensors import FlightSearchQueryDetails, SortBy, HotelSearchQueryDetails
 
 
 # @tool
-class Search:
+class Actuator:
     """Flight Search Tool
     API Reference for Flight Search: https://developer.amadeus.com/docs/flight-search/api-reference
     API Reference for Hotel Search: https://developers.amadeus.com/self-service/category/hotels/api-doc/hotel-list/api-reference
@@ -324,7 +324,7 @@ class Search:
 
 
 if __name__ == "__main__":
-    search = Search()
+    search = Actuator()
 
     # 1. Standard Search (Simple)
     print("\n--- 1. Testing Standard Search (MAD->LON) ---")

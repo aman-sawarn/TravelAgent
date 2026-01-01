@@ -9,10 +9,10 @@ load_dotenv(dotenv_path)
 
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from services.search import Search, CheapestFlightSearchDetails
+from services.environment import Actuator, CheapestFlightSearchDetails
 
 async def test_routes():
-    search = Search()
+    search = Actuator()
     routes = [
         ("MAD", "MUC"),
         ("LHR", "JFK"),
@@ -29,7 +29,7 @@ async def test_routes():
         details = CheapestFlightSearchDetails(origin=origin, destination=dest)
         try:
             # We need to call the method. 
-            # Note: The current implementation in search.py might catch the 500 and return an error dict.
+            # Note: The current implementation in environment.py might catch the 500 and return an error dict.
             # We want to see if any return actual results.
             result = await search.search_cheapest_flights_date_range(details)
             if "error" in result:
