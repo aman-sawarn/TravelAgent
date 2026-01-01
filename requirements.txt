@@ -7,4 +7,4 @@ langgraph
 langchain-openai
 amadeus
 requests
-langchain-community
+langchain-communityprompt_toolkit

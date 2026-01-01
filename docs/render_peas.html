@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Load mermaid -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: { useMaxWidth: false, htmlLabels: true }
+        });
+    </script>
+    <style>
+        body {
+            background: white;
+        }
+    </style>
+    <script>
+        function downloadSvg() {
+            const svg = document.querySelector('.mermaid > svg').outerHTML;
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'peas_diagram.svg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            console.log("Download triggered");
+        }
+    </script>
+</head>
+
+<body>
+    <button id="downloadBtn" onclick="downloadSvg()" style="padding:10px; margin:10px;">Download SVG</button>
+    <div class="mermaid">
+        graph LR
+        %% Star Format / Radial Tree
+
+        %% Styles
+        classDef hub fill:#2d3436,stroke:#000,stroke-width:4px,color:#fff,font-size:16px;
+        classDef perf fill:#00b894,stroke:#000,stroke-width:1px,color:#fff;
+        classDef env fill:#0984e3,stroke:#000,stroke-width:1px,color:#fff;
+        classDef act fill:#fdcb6e,stroke:#000,stroke-width:1px,color:#000;
+        classDef sens fill:#d63031,stroke:#000,stroke-width:1px,color:#fff;
+        classDef item fill:#fff,stroke:#b2bec3,stroke-width:1px,color:#2d3436,font-size:12px;
+
+        %% Central Hub
+        TA((Travel Agent)):::hub
+
+        %% Branches
+        TA --> Perf(Performance):::perf
+        TA --> Env(Environment):::env
+        TA --> Act(Actuators):::act
+        TA --> Sens(Sensors):::sens
+
+        %% Performance Details
+        Perf --> P1(Accuracy):::item
+        Perf --> P2(Cheapness):::item
+        Perf --> P3(Speed):::item
+
+        %% Environment Details
+        Env --> E1(User):::item
+        Env --> E2(Amadeus API):::item
+        Env --> E3(Python Runtime):::item
+
+        %% Actuator Details
+        Act --> A1(API Requests):::item
+        Act --> A2(Filtering):::item
+        Act --> A3(Sorting):::item
+
+        %% Sensor Details
+        Sens --> S1(User Prompt):::item
+        Sens --> S2(JSON Response):::item
+        Sens --> S3(Time Check):::item
+    </div>
+</body>
+
+</html>
