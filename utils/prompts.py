@@ -5,7 +5,7 @@ from pydantic import ValidationError
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.sensors import FlightSearchQueryDetails, FetchIntent, DateRangeDetails
+from utils.sensors import FlightSearchQueryDetails, FetchIntent, DateRangeDetails, HotelSearchQueryDetails
 from config.main_config import model_name
 
 def fetch_date_range_from_query(prompt: str, model_to_be_used: str = model_name) -> DateRangeDetails:
