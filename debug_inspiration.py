@@ -11,7 +11,7 @@ load_dotenv(dotenv_path)
 
 # Ensure utils can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from services.search import Search
+from services.environment import Search
 
 async def test_inspiration_endpoint():
     search = Search()
